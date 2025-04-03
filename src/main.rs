@@ -14,7 +14,7 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
     for entry in walker {
         match entry {
             Ok(entry) => {
-                let prefix = "  ".repeat(entry.depth());
+                let prefix = args.prefix.repeat(entry.depth());
                 output.push_str(&format!(
                     "{prefix}{}\n",
                     entry.file_name().to_string_lossy()
