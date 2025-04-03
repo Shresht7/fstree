@@ -26,5 +26,10 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
 }
 
 fn format_entry(prefix: String, entry: &ignore::DirEntry) -> String {
-    format!("{prefix}{}\n", entry.file_name().to_string_lossy())
+    let display = if entry.file_type().is_some_and(|f| f.is_dir()) {
+        format!("{}/", entry.file_name().to_string_lossy())
+    } else {
+        entry.file_name().to_string_lossy().to_string()
+    };
+    format!("{prefix}{}\n", display)
 }
