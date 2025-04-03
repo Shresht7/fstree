@@ -12,7 +12,8 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
     for path in walker {
         match path {
             Ok(path) => {
-                println!("{}", path.file_name().to_string_lossy())
+                let prefix = "  ".repeat(path.depth());
+                println!("{prefix}{}", path.file_name().to_string_lossy())
             }
             Err(_) => {} // Ignore errors in traversal for now
         }
