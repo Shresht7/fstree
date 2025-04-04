@@ -17,6 +17,10 @@ pub struct Args {
     /// Include hidden files
     #[clap(short = 'a', long, alias = "all")]
     pub hidden: bool,
+
+    /// The maximum depth to recurse
+    #[clap(short = 'd', long)]
+    pub max_depth: Option<usize>,
 }
 
 /// Parses command line arguments into the Args struct

@@ -27,6 +27,7 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
 
     let walker = ignore::WalkBuilder::new(&args.path)
         .hidden(!args.hidden)
+        .max_depth(args.max_depth)
         .build();
     for entry in walker {
         match entry {
