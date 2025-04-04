@@ -25,7 +25,9 @@ fn main() {
 fn run(args: &cli::Args) -> std::io::Result<()> {
     let mut output = String::new();
 
-    let walker = ignore::WalkBuilder::new(&args.path).build();
+    let walker = ignore::WalkBuilder::new(&args.path)
+        .hidden(!args.hidden)
+        .build();
     for entry in walker {
         match entry {
             Ok(entry) => {

@@ -13,6 +13,10 @@ pub struct Args {
     /// The prefix string to use for each level of the tree
     #[clap(short, long, default_value = "|-- ")]
     pub prefix: String,
+
+    /// Include hidden files
+    #[clap(short = 'a', long, alias = "all")]
+    pub hidden: bool,
 }
 
 /// Parses command line arguments into the Args struct
