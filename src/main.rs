@@ -1,5 +1,11 @@
+//! A command-line utility that displays directory structure in a tree-like format
+//!
+//! This program walks through directories and displays their contents in a
+//! hierarchical tree structure, similar to the Unix tree command.
+
 mod cli;
 
+/// The main entrypoint of the application
 fn main() {
     let args = cli::parse();
     if let Err(e) = run(&args) {
@@ -7,6 +13,15 @@ fn main() {
     }
 }
 
+/// Processes the directory tree and generates the formatted output
+///
+/// # Arguments
+///
+/// * `args` - Command line arguments containing path and formatting options
+///
+/// # Returns
+///
+/// * `std::io::Result<()>` - Success or IO error during directory traversal
 fn run(args: &cli::Args) -> std::io::Result<()> {
     let mut output = String::new();
 
@@ -25,6 +40,16 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Formats a single directory entry with the appropriate prefix
+///
+/// # Arguments
+///
+/// * `prefix` - The string prefix to use for the current tree level
+/// * `entry` - The directory entry to format
+///
+/// # Returns
+///
+/// * String - The formatted entry string with appropriate prefix and newline
 fn format_entry(prefix: String, entry: &ignore::DirEntry) -> String {
     let display = if entry.file_type().is_some_and(|f| f.is_dir()) {
         format!("{}/", entry.file_name().to_string_lossy())
