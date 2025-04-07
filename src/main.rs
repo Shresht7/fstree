@@ -10,6 +10,7 @@ fn main() {
     let args = cli::parse();
     if let Err(e) = run(&args) {
         eprintln!("Error: {e}");
+        std::process::exit(1);
     }
 }
 
