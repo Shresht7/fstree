@@ -5,6 +5,7 @@ use clap::Parser;
 /// This struct holds the configuration options that can be passed
 /// to the program through command line arguments.
 #[derive(Parser)]
+#[command(author, version, about)]
 pub struct Args {
     /// The directory path to generate the tree from
     #[clap(default_value = ".")]
