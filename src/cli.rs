@@ -11,7 +11,7 @@ pub struct Args {
     pub path: std::path::PathBuf,
 
     /// The prefix string to use for each level of the tree
-    #[clap(short, long, default_value = "|-- ")]
+    #[clap(short, long, default_value = "├── ")]
     pub prefix: String,
 
     /// Include hidden files
@@ -27,3 +27,5 @@ pub struct Args {
 pub fn parse() -> Args {
     Args::parse()
 }
+
+// └── for the last entry
