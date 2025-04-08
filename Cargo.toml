@@ -7,4 +7,5 @@ description = "list contents of a directory in a tree format"
 
 [dependencies]
 clap = { version = "4.5.35", features = ["derive"] }
+globset = "0.4.16"
 ignore = "0.4.23"
