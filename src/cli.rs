@@ -31,8 +31,12 @@ pub struct Args {
     pub show_all: bool,
 
     /// Show only files that match the pattern (glob syntax)
-    #[clap(short = 'P', long, value_name = "PATTERN")]
+    #[clap(short = 'P', long)]
     pub pattern: Option<String>,
+
+    /// Exclude files that match the pattern (glob syntax)
+    #[clap(short = 'I', long)]
+    pub exclude: Option<String>,
 
     /// Show only directories
     #[clap(long, aliases = ["dir", "folder"])]

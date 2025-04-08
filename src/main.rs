@@ -51,6 +51,11 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     } else {
         None
     };
+    let exclude_pattern = if let Some(pat) = &args.exclude {
+        Some(Glob::new(pat)?.compile_matcher())
+    } else {
+        None
+    };
 
     // Setup ignore rules
     let ignorer = ignore::setup_gitignore(&args.path).unwrap_or_else(|_| Gitignore::empty());
@@ -62,7 +67,15 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     let mut stats = Statistics::default();
 
     // Traverse down the tree
-    walk(&args.path, "", args, &pattern, &ignorer, &mut stats)?;
+    walk(
+        &args.path,
+        "",
+        args,
+        &pattern,
+        &exclude_pattern,
+        &ignorer,
+        &mut stats,
+    )?;
 
     // Print summary if requested
     if args.summary {
@@ -90,6 +103,7 @@ fn walk<P: AsRef<std::path::Path>>(
     prefix: &str,
     args: &cli::Args,
     pattern: &Option<globset::GlobMatcher>,
+    exclude_pattern: &Option<globset::GlobMatcher>,
     ignorer: &Gitignore,
     stats: &mut Statistics,
 ) -> std::io::Result<()> {
@@ -122,6 +136,14 @@ fn walk<P: AsRef<std::path::Path>>(
         if let Some(pattern) = pattern {
             // Always include directories when using pattern matching, to maintain tree hierarchy
             if !is_dir && !pattern.is_match(&file_name) {
+                continue;
+            }
+        }
+
+        // Check if the file matches the exclude pattern, if provided
+        if let Some(pattern) = exclude_pattern {
+            // Always include directories when using pattern matching, to maintain tree hierarchy
+            if !is_dir && pattern.is_match(&file_name) {
                 continue;
             }
         }
@@ -177,7 +199,15 @@ fn walk<P: AsRef<std::path::Path>>(
             };
 
             // Recursively walk the child directory
-            walk(&path, &child_prefix, args, pattern, ignorer, stats)?;
+            walk(
+                &path,
+                &child_prefix,
+                args,
+                pattern,
+                exclude_pattern,
+                ignorer,
+                stats,
+            )?;
         }
     }
     Ok(())
