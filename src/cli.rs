@@ -39,7 +39,7 @@ pub struct Args {
     pub summary: bool,
 
     /// The maximum depth to recurse
-    #[clap(short = 'd', long)]
+    #[clap(short = 'd', long, aliases = ["depth", "level"])]
     pub max_depth: Option<usize>,
 }
 
