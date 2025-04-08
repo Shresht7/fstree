@@ -113,6 +113,11 @@ fn walk<P: AsRef<std::path::Path>>(
             file_name
         };
 
+        // Skip files if `--directory` was passed in
+        if args.directory && !is_dir {
+            continue;
+        }
+
         // Check if the file matches the pattern, if a pattern is provided
         if let Some(pattern) = pattern {
             // Always include directories when using pattern matching, to maintain tree hierarchy

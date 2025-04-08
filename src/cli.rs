@@ -34,6 +34,10 @@ pub struct Args {
     #[clap(short = 'P', long, value_name = "PATTERN")]
     pub pattern: Option<String>,
 
+    /// Show only directories
+    #[clap(long, aliases = ["dir", "folder"])]
+    pub directory: bool,
+
     /// Show directory and file count summary
     #[clap(short = 's', long, alias = "report")]
     pub summary: bool,
