@@ -30,6 +30,10 @@ pub struct Args {
     #[clap(short = 'a', long, alias = "all")]
     pub show_all: bool,
 
+    /// Show only files that match the pattern (glob syntax)
+    #[clap(short = 'P', long, value_name = "PATTERN")]
+    pub pattern: Option<String>,
+
     /// Show directory and file count summary
     #[clap(short = 's', long, alias = "report")]
     pub summary: bool,

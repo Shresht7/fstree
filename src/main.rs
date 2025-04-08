@@ -6,15 +6,10 @@
 use std::fs;
 
 use ::ignore::gitignore::Gitignore;
+use globset::Glob;
 
 mod cli;
 mod ignore;
-
-#[derive(Default)]
-struct Statistics {
-    dirs: usize,
-    files: usize,
-}
 
 /// The main entrypoint of the application
 fn main() {
@@ -23,6 +18,13 @@ fn main() {
         eprintln!("Error: {e}");
         std::process::exit(1);
     }
+}
+
+/// Statistics collected during tree traversal
+#[derive(Default)]
+struct Statistics {
+    dirs: usize,
+    files: usize,
 }
 
 /// Implementation of the main run logic of the command-line
@@ -34,18 +36,25 @@ fn main() {
 /// # Returns
 ///
 /// * `std::io::Result<()>` - Success or IO error during directory traversal
-fn run(args: &cli::Args) -> std::io::Result<()> {
-    // Print the root
-    println!("{}", args.path.display());
+fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
+    // Compile pattern matcher
+    let pattern = if let Some(pat) = &args.pattern {
+        Some(Glob::new(pat)?.compile_matcher())
+    } else {
+        None
+    };
 
     // Setup ignore rules
     let ignorer = ignore::setup_gitignore(&args.path).unwrap_or_else(|_| Gitignore::empty());
+
+    // Print the root
+    println!("{}", args.path.display());
 
     // Initialize statistics
     let mut stats = Statistics::default();
 
     // Traverse down the tree
-    walk(&args.path, "", args, &ignorer, &mut stats)?;
+    walk(&args.path, "", args, &pattern, &ignorer, &mut stats)?;
 
     // Print summary if requested
     if args.summary {
@@ -72,6 +81,7 @@ fn walk<P: AsRef<std::path::Path>>(
     path: P,
     prefix: &str,
     args: &cli::Args,
+    pattern: &Option<globset::GlobMatcher>,
     ignorer: &Gitignore,
     stats: &mut Statistics,
 ) -> std::io::Result<()> {
@@ -94,6 +104,14 @@ fn walk<P: AsRef<std::path::Path>>(
         } else {
             file_name
         };
+
+        // Check if the file matches the pattern, if a pattern is provided
+        if let Some(pattern) = pattern {
+            // Always include directories when using pattern matching, to maintain tree hierarchy
+            if !is_dir && !pattern.is_match(&file_name) {
+                continue;
+            }
+        }
 
         // Skip this entry if the path matches an ignored pattern
         if !args.show_all {
@@ -146,7 +164,7 @@ fn walk<P: AsRef<std::path::Path>>(
             };
 
             // Recursively walk the child directory
-            walk(&path, &child_prefix, args, ignorer, stats)?;
+            walk(&path, &child_prefix, args, pattern, ignorer, stats)?;
         }
     }
     Ok(())
