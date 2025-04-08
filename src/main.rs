@@ -37,6 +37,14 @@ struct Statistics {
 ///
 /// * `std::io::Result<()>` - Success or IO error during directory traversal
 fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
+    // Check if the path actually exists
+    if !std::fs::exists(&args.path)? {
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("path does not exist: {}", &args.path.display().to_string()),
+        )));
+    }
+
     // Compile pattern matcher
     let pattern = if let Some(pat) = &args.pattern {
         Some(Glob::new(pat)?.compile_matcher())
