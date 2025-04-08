@@ -17,7 +17,7 @@ pub struct Args {
 
     /// Include hidden files
     #[clap(short = 'a', long, alias = "all")]
-    pub hidden: bool,
+    pub show_all: bool,
 
     /// The maximum depth to recurse
     #[clap(short = 'd', long)]

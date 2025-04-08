@@ -70,9 +70,11 @@ fn walk<P: AsRef<std::path::Path>>(
         let is_dir = file_type.is_dir();
 
         // Skip this entry if the path matches an ignored pattern
-        if let Ok(rel_path) = path.strip_prefix(&args.path) {
-            if ignorer.matched(rel_path, is_dir).is_ignore() {
-                continue;
+        if !args.show_all {
+            if let Ok(rel_path) = path.strip_prefix(&args.path) {
+                if ignorer.matched(rel_path, is_dir).is_ignore() {
+                    continue;
+                }
             }
         }
 
