@@ -11,6 +11,10 @@ pub struct Args {
     #[clap(default_value = ".")]
     pub path: std::path::PathBuf,
 
+    /// Show full path for each file entry
+    #[clap(short, long)]
+    pub full_path: bool,
+
     /// The prefix string to use for each level of the tree
     #[clap(short, long, default_value = "├── ")]
     pub prefix: String,

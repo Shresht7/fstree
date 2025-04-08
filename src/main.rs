@@ -69,6 +69,15 @@ fn walk<P: AsRef<std::path::Path>>(
         let file_name = entry.file_name().to_string_lossy().to_string();
         let is_dir = file_type.is_dir();
 
+        // Use absolute-path if `--full-path` option was passed
+        let file_name = if args.full_path {
+            std::path::absolute(entry.path())
+                .and_then(|e| Ok(e.display().to_string()))
+                .unwrap_or(file_name)
+        } else {
+            file_name
+        };
+
         // Skip this entry if the path matches an ignored pattern
         if !args.show_all {
             if let Ok(rel_path) = path.strip_prefix(&args.path) {
