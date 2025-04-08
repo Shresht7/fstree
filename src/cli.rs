@@ -15,6 +15,10 @@ pub struct Args {
     #[clap(short, long, default_value = "├── ")]
     pub prefix: String,
 
+    /// The prefix string to use for the last entry of each branch
+    #[clap(short, long, default_value = "└── ")]
+    pub last_prefix: String,
+
     /// Include hidden files
     #[clap(short = 'a', long, alias = "all")]
     pub show_all: bool,

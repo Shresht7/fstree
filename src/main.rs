@@ -79,7 +79,11 @@ fn walk<P: AsRef<std::path::Path>>(
         }
 
         // Determine the branch symbol based on whether this is the last entry
-        let branch = if is_last { "└── " } else { &args.prefix };
+        let branch = if is_last {
+            &args.last_prefix
+        } else {
+            &args.prefix
+        };
 
         // Format the display name, appending a slash for directories
         let display_name = if is_dir {
