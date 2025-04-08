@@ -10,6 +10,12 @@ use ::ignore::gitignore::Gitignore;
 mod cli;
 mod ignore;
 
+#[derive(Default)]
+struct Statistics {
+    dirs: usize,
+    files: usize,
+}
+
 /// The main entrypoint of the application
 fn main() {
     let args = cli::parse();
@@ -35,8 +41,17 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
     // Setup ignore rules
     let ignorer = ignore::setup_gitignore(&args.path).unwrap_or_else(|_| Gitignore::empty());
 
+    // Initialize statistics
+    let mut stats = Statistics::default();
+
     // Traverse down the tree
-    walk(&args.path, "", args, &ignorer)?;
+    walk(&args.path, "", args, &ignorer, &mut stats)?;
+
+    // Print summary if requested
+    if args.summary {
+        println!("\n{} directories, {} files", stats.dirs, stats.files);
+    }
+
     Ok(())
 }
 
@@ -48,6 +63,7 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
 /// * `prefix` - String prefix for the current level of indentation
 /// * `args` - Command line arguments with options
 /// * `ignorer` - Gitignore handler to check if files should be ignored
+/// * `stats` - [`Statistics`] struct to track counts of directories and files
 ///
 /// # Returns
 ///
@@ -57,6 +73,7 @@ fn walk<P: AsRef<std::path::Path>>(
     prefix: &str,
     args: &cli::Args,
     ignorer: &Gitignore,
+    stats: &mut Statistics,
 ) -> std::io::Result<()> {
     // Read the directory entries
     let entries = fs::read_dir(&path)?.collect::<Result<Vec<_>, _>>()?;
@@ -85,6 +102,13 @@ fn walk<P: AsRef<std::path::Path>>(
                     continue;
                 }
             }
+        }
+
+        // Update stats
+        if is_dir {
+            stats.dirs += 1;
+        } else {
+            stats.files += 1;
         }
 
         // Determine the branch symbol based on whether this is the last entry
@@ -122,7 +146,7 @@ fn walk<P: AsRef<std::path::Path>>(
             };
 
             // Recursively walk the child directory
-            walk(&path, &child_prefix, args, ignorer)?;
+            walk(&path, &child_prefix, args, ignorer, stats)?;
         }
     }
     Ok(())

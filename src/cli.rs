@@ -27,6 +27,10 @@ pub struct Args {
     #[clap(short = 'a', long, alias = "all")]
     pub show_all: bool,
 
+    /// Show directory and file count summary
+    #[clap(short = 's', long, alias = "report")]
+    pub summary: bool,
+
     /// The maximum depth to recurse
     #[clap(short = 'd', long)]
     pub max_depth: Option<usize>,
