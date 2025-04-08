@@ -23,6 +23,9 @@ pub struct Args {
     #[clap(short, long, default_value = "└── ")]
     pub last_prefix: String,
 
+    #[clap(short, long, default_value = "│   ")]
+    pub child_prefix: String,
+
     /// Include hidden files
     #[clap(short = 'a', long, alias = "all")]
     pub show_all: bool,

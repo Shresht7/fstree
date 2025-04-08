@@ -132,7 +132,7 @@ fn walk<P: AsRef<std::path::Path>>(
         if is_dir {
             // Respect max-depth, if specified in the arguments
             if let Some(max_depth) = args.max_depth {
-                let current_depth = prefix.matches("│   ").count();
+                let current_depth = prefix.matches(&args.child_prefix).count();
                 if current_depth >= max_depth {
                     continue;
                 }
