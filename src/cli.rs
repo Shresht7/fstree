@@ -28,5 +28,3 @@ pub struct Args {
 pub fn parse() -> Args {
     Args::parse()
 }
-
-// └── for the last entry
