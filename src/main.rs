@@ -5,9 +5,10 @@
 
 use std::fs;
 
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use ::ignore::gitignore::Gitignore;
 
 mod cli;
+mod ignore;
 
 /// The main entrypoint of the application
 fn main() {
@@ -32,31 +33,11 @@ fn run(args: &cli::Args) -> std::io::Result<()> {
     println!("{}", args.path.display());
 
     // Setup ignore rules
-    let ignorer = setup_gitignore(&args.path).unwrap_or_else(|_| Gitignore::empty());
+    let ignorer = ignore::setup_gitignore(&args.path).unwrap_or_else(|_| Gitignore::empty());
 
     // Traverse down the tree
     walk(&args.path, "", args, &ignorer)?;
     Ok(())
-}
-
-/// Sets up gitignore handling for the given root path
-fn setup_gitignore<P: AsRef<std::path::Path>>(root: P) -> Result<Gitignore, ignore::Error> {
-    let root = root.as_ref();
-
-    // Instantiate the ignore::GitignoreBuilder
-    let mut builder = GitignoreBuilder::new(root);
-
-    // Ignore the .git folder
-    builder.add_line(None, ".git")?;
-
-    // Add the project's .gitignore file if it exists
-    let gitignore_path = root.join(".gitignore");
-    if gitignore_path.exists() {
-        builder.add(gitignore_path);
-    }
-
-    // Build the gitignore handler, falling back to an empty one on error
-    Ok(builder.build()?)
 }
 
 /// Recursively walks through the directory structure and prints it
