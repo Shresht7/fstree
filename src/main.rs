@@ -59,7 +59,8 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Setup ignore rules
-    let ignorer = ignore::setup_gitignore(&args.path).unwrap_or_else(|_| Gitignore::empty());
+    let ignorer =
+        ignore::setup_gitignore(&args.path, &args.ignore).unwrap_or_else(|_| Gitignore::empty());
 
     // Print the root
     println!("{}", args.path.display());
