@@ -43,8 +43,12 @@ pub struct Args {
     pub directory: bool,
 
     /// Show directory and file count summary
-    #[clap(short = 's', long, alias = "report")]
+    #[clap(short = 'r', long, alias = "report")]
     pub summary: bool,
+
+    /// Show the filesize next to the name
+    #[clap(short, long, alias = "filesize")]
+    pub size: bool,
 
     /// The maximum depth to recurse
     #[clap(short = 'd', long, aliases = ["depth", "level"])]

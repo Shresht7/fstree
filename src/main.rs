@@ -179,7 +179,17 @@ fn walk<P: AsRef<std::path::Path>>(
         };
 
         // Print the current entry with the appropriate prefix and branch symbol
-        println!("{}{}{}", prefix, branch, display_name);
+        if !args.size {
+            println!("{}{}{}", prefix, branch, display_name);
+        } else {
+            println!(
+                "{}{}{} ({}B)",
+                prefix,
+                branch,
+                display_name,
+                entry.metadata().unwrap().len()
+            )
+        }
 
         // If the entry is a directory, recursively process its contents
         if is_dir {
