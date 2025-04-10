@@ -187,7 +187,10 @@ fn walk<P: AsRef<std::path::Path>>(
                 prefix,
                 branch,
                 display_name,
-                entry.metadata().unwrap().len()
+                entry
+                    .metadata()
+                    .and_then(|e| Ok(e.len().to_string()))
+                    .unwrap_or("--".into())
             )
         }
 
