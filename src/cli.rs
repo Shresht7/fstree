@@ -40,6 +40,10 @@ pub struct Args {
     #[clap(short = 'I', long)]
     pub exclude: Option<String>,
 
+    /// Custom ignore files
+    #[clap(long, alias = "ignore-file")]
+    pub ignore: Vec<String>,
+
     /// Show only directories
     #[clap(long, aliases = ["dir", "folder"])]
     pub directory: bool,
