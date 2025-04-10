@@ -185,7 +185,7 @@ fn walk<P: AsRef<std::path::Path>>(
         } else {
             let bytes = entry.metadata().and_then(|e| Ok(e.len()));
             let size = match bytes {
-                Ok(b) => helpers::bytes::format(b, helpers::bytes::Format::Bytes),
+                Ok(b) => helpers::bytes::format(b, &args.size_format),
                 Err(_) => "--".into(),
             };
             println!("{}{}{} ({})", prefix, branch, display_name, size,)
