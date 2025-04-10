@@ -9,6 +9,7 @@ use ::ignore::gitignore::Gitignore;
 use globset::Glob;
 
 mod cli;
+mod helpers;
 mod ignore;
 
 /// The main entrypoint of the application
@@ -182,16 +183,12 @@ fn walk<P: AsRef<std::path::Path>>(
         if !args.size {
             println!("{}{}{}", prefix, branch, display_name);
         } else {
-            println!(
-                "{}{}{} ({}B)",
-                prefix,
-                branch,
-                display_name,
-                entry
-                    .metadata()
-                    .and_then(|e| Ok(e.len().to_string()))
-                    .unwrap_or("--".into())
-            )
+            let bytes = entry.metadata().and_then(|e| Ok(e.len()));
+            let size = match bytes {
+                Ok(b) => helpers::bytes::format(b, helpers::bytes::Format::Bytes),
+                Err(_) => "--".into(),
+            };
+            println!("{}{}{} ({})", prefix, branch, display_name, size,)
         }
 
         // If the entry is a directory, recursively process its contents
