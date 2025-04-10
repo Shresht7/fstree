@@ -35,10 +35,22 @@ impl Format {
         })
         .to_string()
     }
+
+    fn convert(&self, bytes: u64) -> f64 {
+        match self {
+            Format::Bytes => bytes as f64,
+            Format::KiloBytes => bytes as f64 / 1024.0,
+            Format::MegaBytes => bytes as f64 / 1024.0_f64.powi(2),
+            Format::GigaBytes => bytes as f64 / 1024.0_f64.powi(3),
+            Format::TeraBytes => bytes as f64 / 1024.0_f64.powi(4),
+            Format::PetaBytes => bytes as f64 / 1024.0_f64.powi(5),
+            Format::ExaBytes => bytes as f64 / 1024.0_f64.powi(6),
+        }
+    }
 }
 
 pub fn format(bytes: u64, mode: &Format) -> String {
-    format!("{}{}", bytes, mode.unit())
+    format!("{:.2}{}", mode.convert(bytes), mode.unit())
 }
 
 impl std::str::FromStr for Format {
