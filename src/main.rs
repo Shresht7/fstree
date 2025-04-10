@@ -9,6 +9,7 @@ use ::ignore::gitignore::Gitignore;
 use globset::Glob;
 
 mod cli;
+mod helpers;
 mod ignore;
 
 /// The main entrypoint of the application
@@ -179,7 +180,16 @@ fn walk<P: AsRef<std::path::Path>>(
         };
 
         // Print the current entry with the appropriate prefix and branch symbol
-        println!("{}{}{}", prefix, branch, display_name);
+        if !args.size {
+            println!("{}{}{}", prefix, branch, display_name);
+        } else {
+            let bytes = entry.metadata().and_then(|e| Ok(e.len()));
+            let size = match bytes {
+                Ok(b) => helpers::bytes::format(b, &args.size_format),
+                Err(_) => "--".into(),
+            };
+            println!("{}{}{} ({})", prefix, branch, display_name, size)
+        }
 
         // If the entry is a directory, recursively process its contents
         if is_dir {

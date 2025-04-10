@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Shresht7"]
 description = "list contents of a directory in a tree format"
+keywords = ["cli", "tool", "filesystem"]
+categories = ["command-line-utilities"]
+license = "MIT"
 
 [dependencies]
 clap = { version = "4.5.35", features = ["derive"] }

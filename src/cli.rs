@@ -1,5 +1,7 @@
 use clap::Parser;
 
+use crate::helpers;
+
 /// Command line arguments for the fstree utility
 ///
 /// This struct holds the configuration options that can be passed
@@ -43,8 +45,16 @@ pub struct Args {
     pub directory: bool,
 
     /// Show directory and file count summary
-    #[clap(short = 's', long, alias = "report")]
+    #[clap(short = 'r', long, alias = "report")]
     pub summary: bool,
+
+    /// Show the filesize next to the name
+    #[clap(short, long, alias = "filesize")]
+    pub size: bool,
+
+    /// The format to use for the filesize. e.g. Bytes (B), KiloBytes (KB), MegaBytes (MB), GigaBytes (GB) etc.
+    #[clap(long)]
+    pub size_format: helpers::bytes::Format,
 
     /// The maximum depth to recurse
     #[clap(short = 'd', long, aliases = ["depth", "level"])]
