@@ -188,7 +188,7 @@ fn walk<P: AsRef<std::path::Path>>(
                 Ok(b) => helpers::bytes::format(b, &args.size_format),
                 Err(_) => "--".into(),
             };
-            println!("{}{}{} ({})", prefix, branch, display_name, size,)
+            println!("{}{}{} ({})", prefix, branch, display_name, size)
         }
 
         // If the entry is a directory, recursively process its contents
