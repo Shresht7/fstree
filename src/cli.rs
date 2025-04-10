@@ -53,7 +53,7 @@ pub struct Args {
     pub size: bool,
 
     /// The format to use for the filesize. e.g. Bytes (B), KiloBytes (KB), MegaBytes (MB), GigaBytes (GB) etc.
-    #[clap(long)]
+    #[clap(long, default_value = "bytes")]
     pub size_format: helpers::bytes::Format,
 
     /// The maximum depth to recurse
