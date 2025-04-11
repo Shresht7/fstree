@@ -11,6 +11,7 @@ use globset::Glob;
 mod cli;
 mod helpers;
 mod ignore;
+mod stats;
 
 /// The main entrypoint of the application
 fn main() {
@@ -19,13 +20,6 @@ fn main() {
         eprintln!("Error: {e}");
         std::process::exit(1);
     }
-}
-
-/// Statistics collected during tree traversal
-#[derive(Default)]
-struct Statistics {
-    dirs: usize,
-    files: usize,
 }
 
 /// Implementation of the main run logic of the command-line
@@ -66,7 +60,7 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", args.root.display());
 
     // Initialize statistics
-    let mut stats = Statistics::default();
+    let mut stats = stats::Statistics::default();
 
     // Traverse down the tree
     walk(
@@ -81,7 +75,7 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // Print summary if requested
     if args.summary {
-        println!("\n{} directories, {} files", stats.dirs, stats.files);
+        println!("\n{}", stats);
     }
 
     Ok(())
@@ -107,7 +101,7 @@ fn walk<P: AsRef<std::path::Path>>(
     pattern: &Option<globset::GlobMatcher>,
     exclude_pattern: &Option<globset::GlobMatcher>,
     ignorer: &Gitignore,
-    stats: &mut Statistics,
+    stats: &mut stats::Statistics,
 ) -> std::io::Result<()> {
     // Read the directory entries
     let entries = fs::read_dir(&path)?.collect::<Result<Vec<_>, _>>()?;
@@ -161,9 +155,9 @@ fn walk<P: AsRef<std::path::Path>>(
 
         // Update stats
         if is_dir {
-            stats.dirs += 1;
+            stats.add_dirs(1);
         } else {
-            stats.files += 1;
+            stats.add_files(1);
         }
 
         // Determine the branch symbol based on whether this is the last entry
