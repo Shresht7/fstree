@@ -84,7 +84,7 @@ fn walk<P: AsRef<std::path::Path>>(
     stats: &mut stats::Statistics,
 ) -> std::io::Result<()> {
     // Read the directory entries
-    let entries = fs::read_dir(&path)?.collect::<Result<Vec<_>, _>>()?;
+    let entries = new_walk(path, args, include_pattern, exclude_pattern, ignorer)?;
 
     // Iterate over each entry in the directory
     for (i, entry) in entries.iter().enumerate() {
@@ -201,4 +201,54 @@ fn walk<P: AsRef<std::path::Path>>(
         }
     }
     Ok(())
+}
+
+fn new_walk<P: AsRef<std::path::Path>>(
+    path: P,
+    args: &cli::Args,
+    include_pattern: &Option<globset::GlobMatcher>,
+    exclude_pattern: &Option<globset::GlobMatcher>,
+    ignorer: &Gitignore,
+) -> std::io::Result<Vec<std::fs::DirEntry>> {
+    Ok(fs::read_dir(path)?
+        .filter_map(Result::ok)
+        .filter(|entry| {
+            let file_type = match entry.file_type() {
+                Ok(ft) => ft,
+                Err(_) => return false, // Skip entry if the file-type could not be determined
+            };
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            let is_dir = file_type.is_dir();
+
+            // Skip non-directories if --directory flag is passed
+            if args.directory && !is_dir {
+                return false;
+            }
+
+            // Include pattern
+            if let Some(pattern) = include_pattern {
+                if !is_dir && !pattern.is_match(&file_name) {
+                    return false;
+                }
+            }
+
+            // Exclude pattern
+            if let Some(pattern) = exclude_pattern {
+                if !is_dir && pattern.is_match(&file_name) {
+                    return false;
+                }
+            }
+
+            // Ignore files based on .gitignore rules
+            if !args.show_all {
+                if let Ok(rel_path) = entry.path().strip_prefix(&args.root) {
+                    if ignorer.matched(rel_path, is_dir).is_ignore() {
+                        return false;
+                    }
+                }
+            }
+
+            true
+        })
+        .collect::<Vec<_>>())
 }
