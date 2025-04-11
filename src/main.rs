@@ -84,96 +84,31 @@ fn walk<P: AsRef<std::path::Path>>(
     stats: &mut stats::Statistics,
 ) -> std::io::Result<()> {
     // Read the directory entries
-    let entries = new_walk(path, args, include_pattern, exclude_pattern, ignorer)?;
+    let entries = read_and_filter_entries(path, args, include_pattern, exclude_pattern, ignorer)?;
 
     // Iterate over each entry in the directory
     for (i, entry) in entries.iter().enumerate() {
         let is_last = i == entries.len() - 1;
-        let path = entry.path();
         let file_type = entry.file_type()?;
-        let file_name = entry.file_name().to_string_lossy().to_string();
         let is_dir = file_type.is_dir();
 
-        // Use absolute-path if `--full-path` option was passed
-        let file_name = if args.full_path {
-            std::path::absolute(entry.path())
-                .and_then(|e| Ok(e.display().to_string()))
-                .unwrap_or(file_name)
-        } else {
-            file_name
-        };
+        let abs_path = entry.path();
+        let mut file_name = entry.file_name().to_string_lossy().to_string();
 
-        // Skip files if `--directory` was passed in
-        if args.directory && !is_dir {
-            continue;
-        }
-
-        // Check if the file matches the pattern, if a pattern is provided
-        if let Some(pattern) = include_pattern {
-            // Always include directories when using pattern matching, to maintain tree hierarchy
-            if !is_dir && !pattern.is_match(&file_name) {
-                continue;
-            }
-        }
-
-        // Check if the file matches the exclude pattern, if provided
-        if let Some(pattern) = exclude_pattern {
-            // Always include directories when using pattern matching, to maintain tree hierarchy
-            if !is_dir && pattern.is_match(&file_name) {
-                continue;
-            }
-        }
-
-        // Skip this entry if the path matches an ignored pattern
-        if !args.show_all {
-            if let Ok(rel_path) = path.strip_prefix(&args.root) {
-                if ignorer.matched(rel_path, is_dir).is_ignore() {
-                    continue;
-                }
-            }
+        if args.full_path {
+            file_name = std::path::absolute(&abs_path)
+                .map(|p| p.display().to_string())
+                .unwrap_or(file_name.clone());
         }
 
         // Update stats
+        update_stats(entry, is_dir, stats);
+
+        // Print entry
+        print_entry(&file_name, &prefix, is_last, is_dir, args, entry)?;
+
+        // Recursively walk children
         if is_dir {
-            stats.add_dirs(1);
-        } else {
-            stats.add_files(1);
-            let size = entry
-                .metadata()
-                .and_then(|x| Ok(x.file_size()))
-                .unwrap_or(0);
-            stats.add_byte_size(size);
-        }
-
-        // Determine the branch symbol based on whether this is the last entry
-        let branch = if is_last {
-            &args.last_prefix
-        } else {
-            &args.prefix
-        };
-
-        // Format the display name, appending a slash for directories
-        let display_name = if is_dir {
-            format!("{}/", file_name)
-        } else {
-            file_name
-        };
-
-        // Print the current entry with the appropriate prefix and branch symbol
-        if !args.size {
-            println!("{}{}{}", prefix, branch, display_name);
-        } else {
-            let bytes = entry.metadata().and_then(|e| Ok(e.len()));
-            let size = match bytes {
-                Ok(b) => helpers::bytes::format(b, &args.size_format),
-                Err(_) => "--".into(),
-            };
-            println!("{}{}{} ({})", prefix, branch, display_name, size)
-        }
-
-        // If the entry is a directory, recursively process its contents
-        if is_dir {
-            // Respect max-depth, if specified in the arguments
             if let Some(max_depth) = args.max_depth {
                 let current_depth = prefix.matches(&args.child_prefix).count();
                 if current_depth >= max_depth {
@@ -181,16 +116,14 @@ fn walk<P: AsRef<std::path::Path>>(
                 }
             }
 
-            // Create a new prefix for the child entries
             let child_prefix = if is_last {
                 format!("{}    ", prefix)
             } else {
                 format!("{}│   ", prefix)
             };
 
-            // Recursively walk the child directory
             walk(
-                &path,
+                &abs_path,
                 &child_prefix,
                 args,
                 include_pattern,
@@ -200,10 +133,11 @@ fn walk<P: AsRef<std::path::Path>>(
             )?;
         }
     }
+
     Ok(())
 }
 
-fn new_walk<P: AsRef<std::path::Path>>(
+fn read_and_filter_entries<P: AsRef<std::path::Path>>(
     path: P,
     args: &cli::Args,
     include_pattern: &Option<globset::GlobMatcher>,
@@ -251,4 +185,48 @@ fn new_walk<P: AsRef<std::path::Path>>(
             true
         })
         .collect::<Vec<_>>())
+}
+
+fn update_stats(entry: &fs::DirEntry, is_dir: bool, stats: &mut stats::Statistics) {
+    if is_dir {
+        stats.add_dirs(1);
+    } else {
+        stats.add_files(1);
+        let size = entry.metadata().map(|m| m.file_size()).unwrap_or(0);
+        stats.add_byte_size(size);
+    }
+}
+
+fn print_entry(
+    file_name: &str,
+    prefix: &str,
+    is_last: bool,
+    is_dir: bool,
+    args: &cli::Args,
+    entry: &fs::DirEntry,
+) -> std::io::Result<()> {
+    let branch = if is_last {
+        &args.last_prefix
+    } else {
+        &args.prefix
+    };
+
+    let display_name = if is_dir {
+        format!("{}/", file_name)
+    } else {
+        file_name.to_string()
+    };
+
+    if args.size {
+        let size = entry
+            .metadata()
+            .map(|m| helpers::bytes::format(m.len(), &args.size_format))
+            .unwrap_or_else(|_| "--".into());
+
+        println!("{}{}{} ({})", prefix, branch, display_name, size);
+    } else {
+        println!("{}{}{}", prefix, branch, display_name);
+    }
+
+    Ok(())
 }
