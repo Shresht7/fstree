@@ -39,10 +39,10 @@ struct Statistics {
 /// * `std::io::Result<()>` - Success or IO error during directory traversal
 fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     // Check if the path actually exists
-    if !std::fs::exists(&args.path)? {
+    if !std::fs::exists(&args.root)? {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            format!("path does not exist: {}", &args.path.display().to_string()),
+            format!("path does not exist: {}", &args.root.display().to_string()),
         )));
     }
 
@@ -60,17 +60,17 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup ignore rules
     let ignorer =
-        ignore::setup_gitignore(&args.path, &args.ignore).unwrap_or_else(|_| Gitignore::empty());
+        ignore::setup_gitignore(&args.root, &args.ignore).unwrap_or_else(|_| Gitignore::empty());
 
     // Print the root
-    println!("{}", args.path.display());
+    println!("{}", args.root.display());
 
     // Initialize statistics
     let mut stats = Statistics::default();
 
     // Traverse down the tree
     walk(
-        &args.path,
+        &args.root,
         "",
         args,
         &pattern,
@@ -152,7 +152,7 @@ fn walk<P: AsRef<std::path::Path>>(
 
         // Skip this entry if the path matches an ignored pattern
         if !args.show_all {
-            if let Ok(rel_path) = path.strip_prefix(&args.path) {
+            if let Ok(rel_path) = path.strip_prefix(&args.root) {
                 if ignorer.matched(rel_path, is_dir).is_ignore() {
                     continue;
                 }
