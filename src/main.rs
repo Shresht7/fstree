@@ -48,11 +48,11 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     let ignorer =
         ignore::setup_gitignore(&args.root, &args.ignore).unwrap_or_else(|_| Gitignore::empty());
 
-    // Print the root
-    println!("{}", args.root.display());
-
     // Initialize statistics
     let mut stats = stats::Statistics::default();
+
+    // Print the root
+    println!("{}", args.root.display());
 
     // Traverse down the tree
     walk(
