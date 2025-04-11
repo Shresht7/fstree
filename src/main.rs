@@ -3,7 +3,7 @@
 //! This program walks through directories and displays their contents in a
 //! hierarchical tree structure, similar to the Unix tree command.
 
-use std::fs;
+use std::{fs, os::windows::fs::MetadataExt};
 
 use ::ignore::gitignore::Gitignore;
 use globset::Glob;
@@ -158,6 +158,11 @@ fn walk<P: AsRef<std::path::Path>>(
             stats.add_dirs(1);
         } else {
             stats.add_files(1);
+            let size = entry
+                .metadata()
+                .and_then(|x| Ok(x.file_size()))
+                .unwrap_or(0);
+            stats.add_byte_size(size);
         }
 
         // Determine the branch symbol based on whether this is the last entry
