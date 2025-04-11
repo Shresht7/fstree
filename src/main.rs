@@ -23,14 +23,6 @@ fn main() {
 }
 
 /// Implementation of the main run logic of the command-line
-///
-/// # Arguments
-///
-/// * `args` - Command line arguments containing path and formatting options
-///
-/// # Returns
-///
-/// * `std::io::Result<()>` - Success or IO error during directory traversal
 fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     // Check if the path actually exists
     if !std::fs::exists(&args.root)? {
