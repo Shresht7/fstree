@@ -74,18 +74,6 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Recursively walks through the directory structure and prints it
-///
-/// # Arguments
-///
-/// * `path` - Current directory path to process
-/// * `prefix` - String prefix for the current level of indentation
-/// * `args` - Command line arguments with options
-/// * `ignorer` - Gitignore handler to check if files should be ignored
-/// * `stats` - [`Statistics`] struct to track counts of directories and files
-///
-/// # Returns
-///
-/// * `std::io::Result<()>` - Success or IO error during traversal
 fn walk<P: AsRef<std::path::Path>>(
     path: P,
     prefix: &str,
