@@ -11,7 +11,7 @@ use crate::helpers;
 pub struct Args {
     /// The directory path to generate the tree from
     #[clap(default_value = ".")]
-    pub path: std::path::PathBuf,
+    pub root: std::path::PathBuf,
 
     /// Show full path for each file entry
     #[clap(short, long)]
