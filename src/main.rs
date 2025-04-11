@@ -3,7 +3,7 @@
 //! This program walks through directories and displays their contents in a
 //! hierarchical tree structure, similar to the Unix tree command.
 
-use std::fs;
+use std::{fs, os::windows::fs::MetadataExt};
 
 use ::ignore::gitignore::Gitignore;
 use globset::Glob;
@@ -11,6 +11,7 @@ use globset::Glob;
 mod cli;
 mod helpers;
 mod ignore;
+mod stats;
 
 /// The main entrypoint of the application
 fn main() {
@@ -21,33 +22,18 @@ fn main() {
     }
 }
 
-/// Statistics collected during tree traversal
-#[derive(Default)]
-struct Statistics {
-    dirs: usize,
-    files: usize,
-}
-
 /// Implementation of the main run logic of the command-line
-///
-/// # Arguments
-///
-/// * `args` - Command line arguments containing path and formatting options
-///
-/// # Returns
-///
-/// * `std::io::Result<()>` - Success or IO error during directory traversal
 fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     // Check if the path actually exists
-    if !std::fs::exists(&args.path)? {
+    if !std::fs::exists(&args.root)? {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            format!("path does not exist: {}", &args.path.display().to_string()),
+            format!("path does not exist: {}", &args.root.display().to_string()),
         )));
     }
 
     // Compile pattern matcher
-    let pattern = if let Some(pat) = &args.pattern {
+    let include_pattern = if let Some(pat) = &args.include {
         Some(Glob::new(pat)?.compile_matcher())
     } else {
         None
@@ -60,20 +46,20 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup ignore rules
     let ignorer =
-        ignore::setup_gitignore(&args.path, &args.ignore).unwrap_or_else(|_| Gitignore::empty());
-
-    // Print the root
-    println!("{}", args.path.display());
+        ignore::setup_gitignore(&args.root, &args.ignore).unwrap_or_else(|_| Gitignore::empty());
 
     // Initialize statistics
-    let mut stats = Statistics::default();
+    let mut stats = stats::Statistics::default();
+
+    // Print the root
+    println!("{}", args.root.display());
 
     // Traverse down the tree
     walk(
-        &args.path,
+        &args.root,
         "",
         args,
-        &pattern,
+        &include_pattern,
         &exclude_pattern,
         &ignorer,
         &mut stats,
@@ -81,120 +67,48 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // Print summary if requested
     if args.summary {
-        println!("\n{} directories, {} files", stats.dirs, stats.files);
+        println!("\n{}", stats);
     }
 
     Ok(())
 }
 
 /// Recursively walks through the directory structure and prints it
-///
-/// # Arguments
-///
-/// * `path` - Current directory path to process
-/// * `prefix` - String prefix for the current level of indentation
-/// * `args` - Command line arguments with options
-/// * `ignorer` - Gitignore handler to check if files should be ignored
-/// * `stats` - [`Statistics`] struct to track counts of directories and files
-///
-/// # Returns
-///
-/// * `std::io::Result<()>` - Success or IO error during traversal
 fn walk<P: AsRef<std::path::Path>>(
     path: P,
     prefix: &str,
     args: &cli::Args,
-    pattern: &Option<globset::GlobMatcher>,
+    include_pattern: &Option<globset::GlobMatcher>,
     exclude_pattern: &Option<globset::GlobMatcher>,
     ignorer: &Gitignore,
-    stats: &mut Statistics,
+    stats: &mut stats::Statistics,
 ) -> std::io::Result<()> {
     // Read the directory entries
-    let entries = fs::read_dir(&path)?.collect::<Result<Vec<_>, _>>()?;
+    let entries = read_and_filter_entries(path, args, include_pattern, exclude_pattern, ignorer)?;
 
     // Iterate over each entry in the directory
     for (i, entry) in entries.iter().enumerate() {
         let is_last = i == entries.len() - 1;
-        let path = entry.path();
         let file_type = entry.file_type()?;
-        let file_name = entry.file_name().to_string_lossy().to_string();
         let is_dir = file_type.is_dir();
 
-        // Use absolute-path if `--full-path` option was passed
-        let file_name = if args.full_path {
-            std::path::absolute(entry.path())
-                .and_then(|e| Ok(e.display().to_string()))
-                .unwrap_or(file_name)
-        } else {
-            file_name
-        };
+        let abs_path = entry.path();
+        let mut file_name = entry.file_name().to_string_lossy().to_string();
 
-        // Skip files if `--directory` was passed in
-        if args.directory && !is_dir {
-            continue;
-        }
-
-        // Check if the file matches the pattern, if a pattern is provided
-        if let Some(pattern) = pattern {
-            // Always include directories when using pattern matching, to maintain tree hierarchy
-            if !is_dir && !pattern.is_match(&file_name) {
-                continue;
-            }
-        }
-
-        // Check if the file matches the exclude pattern, if provided
-        if let Some(pattern) = exclude_pattern {
-            // Always include directories when using pattern matching, to maintain tree hierarchy
-            if !is_dir && pattern.is_match(&file_name) {
-                continue;
-            }
-        }
-
-        // Skip this entry if the path matches an ignored pattern
-        if !args.show_all {
-            if let Ok(rel_path) = path.strip_prefix(&args.path) {
-                if ignorer.matched(rel_path, is_dir).is_ignore() {
-                    continue;
-                }
-            }
+        if args.full_path {
+            file_name = std::path::absolute(&abs_path)
+                .map(|p| p.display().to_string())
+                .unwrap_or(file_name.clone());
         }
 
         // Update stats
+        update_stats(entry, is_dir, stats);
+
+        // Print entry
+        print_entry(&file_name, &prefix, is_last, is_dir, args, entry)?;
+
+        // Recursively walk children
         if is_dir {
-            stats.dirs += 1;
-        } else {
-            stats.files += 1;
-        }
-
-        // Determine the branch symbol based on whether this is the last entry
-        let branch = if is_last {
-            &args.last_prefix
-        } else {
-            &args.prefix
-        };
-
-        // Format the display name, appending a slash for directories
-        let display_name = if is_dir {
-            format!("{}/", file_name)
-        } else {
-            file_name
-        };
-
-        // Print the current entry with the appropriate prefix and branch symbol
-        if !args.size {
-            println!("{}{}{}", prefix, branch, display_name);
-        } else {
-            let bytes = entry.metadata().and_then(|e| Ok(e.len()));
-            let size = match bytes {
-                Ok(b) => helpers::bytes::format(b, &args.size_format),
-                Err(_) => "--".into(),
-            };
-            println!("{}{}{} ({})", prefix, branch, display_name, size)
-        }
-
-        // If the entry is a directory, recursively process its contents
-        if is_dir {
-            // Respect max-depth, if specified in the arguments
             if let Some(max_depth) = args.max_depth {
                 let current_depth = prefix.matches(&args.child_prefix).count();
                 if current_depth >= max_depth {
@@ -202,24 +116,117 @@ fn walk<P: AsRef<std::path::Path>>(
                 }
             }
 
-            // Create a new prefix for the child entries
             let child_prefix = if is_last {
                 format!("{}    ", prefix)
             } else {
                 format!("{}│   ", prefix)
             };
 
-            // Recursively walk the child directory
             walk(
-                &path,
+                &abs_path,
                 &child_prefix,
                 args,
-                pattern,
+                include_pattern,
                 exclude_pattern,
                 ignorer,
                 stats,
             )?;
         }
     }
+
+    Ok(())
+}
+
+fn read_and_filter_entries<P: AsRef<std::path::Path>>(
+    path: P,
+    args: &cli::Args,
+    include_pattern: &Option<globset::GlobMatcher>,
+    exclude_pattern: &Option<globset::GlobMatcher>,
+    ignorer: &Gitignore,
+) -> std::io::Result<Vec<std::fs::DirEntry>> {
+    Ok(fs::read_dir(path)?
+        .filter_map(Result::ok)
+        .filter(|entry| {
+            let file_type = match entry.file_type() {
+                Ok(ft) => ft,
+                Err(_) => return false, // Skip entry if the file-type could not be determined
+            };
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            let is_dir = file_type.is_dir();
+
+            // Skip non-directories if --directory flag is passed
+            if args.directory && !is_dir {
+                return false;
+            }
+
+            // Include pattern
+            if let Some(pattern) = include_pattern {
+                if !is_dir && !pattern.is_match(&file_name) {
+                    return false;
+                }
+            }
+
+            // Exclude pattern
+            if let Some(pattern) = exclude_pattern {
+                if !is_dir && pattern.is_match(&file_name) {
+                    return false;
+                }
+            }
+
+            // Ignore files based on .gitignore rules
+            if !args.show_all {
+                if let Ok(rel_path) = entry.path().strip_prefix(&args.root) {
+                    if ignorer.matched(rel_path, is_dir).is_ignore() {
+                        return false;
+                    }
+                }
+            }
+
+            true
+        })
+        .collect::<Vec<_>>())
+}
+
+fn update_stats(entry: &fs::DirEntry, is_dir: bool, stats: &mut stats::Statistics) {
+    if is_dir {
+        stats.add_dirs(1);
+    } else {
+        stats.add_files(1);
+        let size = entry.metadata().map(|m| m.file_size()).unwrap_or(0);
+        stats.add_byte_size(size);
+    }
+}
+
+fn print_entry(
+    file_name: &str,
+    prefix: &str,
+    is_last: bool,
+    is_dir: bool,
+    args: &cli::Args,
+    entry: &fs::DirEntry,
+) -> std::io::Result<()> {
+    let branch = if is_last {
+        &args.last_prefix
+    } else {
+        &args.prefix
+    };
+
+    let display_name = if is_dir {
+        format!("{}/", file_name)
+    } else {
+        file_name.to_string()
+    };
+
+    if args.size {
+        let size = entry
+            .metadata()
+            .map(|m| helpers::bytes::format(m.len(), &args.size_format))
+            .unwrap_or_else(|_| "--".into());
+
+        println!("{}{}{} ({})", prefix, branch, display_name, size);
+    } else {
+        println!("{}{}{}", prefix, branch, display_name);
+    }
+
     Ok(())
 }
