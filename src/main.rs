@@ -33,7 +33,7 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Compile pattern matcher
-    let pattern = if let Some(pat) = &args.pattern {
+    let include_pattern = if let Some(pat) = &args.include {
         Some(Glob::new(pat)?.compile_matcher())
     } else {
         None
@@ -59,7 +59,7 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
         &args.root,
         "",
         args,
-        &pattern,
+        &include_pattern,
         &exclude_pattern,
         &ignorer,
         &mut stats,
@@ -90,7 +90,7 @@ fn walk<P: AsRef<std::path::Path>>(
     path: P,
     prefix: &str,
     args: &cli::Args,
-    pattern: &Option<globset::GlobMatcher>,
+    include_pattern: &Option<globset::GlobMatcher>,
     exclude_pattern: &Option<globset::GlobMatcher>,
     ignorer: &Gitignore,
     stats: &mut stats::Statistics,
@@ -121,7 +121,7 @@ fn walk<P: AsRef<std::path::Path>>(
         }
 
         // Check if the file matches the pattern, if a pattern is provided
-        if let Some(pattern) = pattern {
+        if let Some(pattern) = include_pattern {
             // Always include directories when using pattern matching, to maintain tree hierarchy
             if !is_dir && !pattern.is_match(&file_name) {
                 continue;
@@ -205,7 +205,7 @@ fn walk<P: AsRef<std::path::Path>>(
                 &path,
                 &child_prefix,
                 args,
-                pattern,
+                include_pattern,
                 exclude_pattern,
                 ignorer,
                 stats,
