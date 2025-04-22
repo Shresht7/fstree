@@ -1,5 +1,6 @@
 use clap::Parser;
 
+use crate::formatter::OutputFormat;
 use crate::helpers;
 
 /// Command line arguments for the fstree utility
@@ -11,7 +12,7 @@ use crate::helpers;
 pub struct Args {
     /// The directory path to generate the tree from
     #[clap(default_value = ".")]
-    pub path: std::path::PathBuf,
+    pub root: std::path::PathBuf,
 
     /// Show full path for each file entry
     #[clap(short, long)]
@@ -33,11 +34,11 @@ pub struct Args {
     pub show_all: bool,
 
     /// Show only files that match the pattern (glob syntax)
-    #[clap(short = 'P', long)]
-    pub pattern: Option<String>,
+    #[clap(short, long, alias = "pattern")]
+    pub include: Option<String>,
 
     /// Exclude files that match the pattern (glob syntax)
-    #[clap(short = 'I', long)]
+    #[clap(short, long)]
     pub exclude: Option<String>,
 
     /// Custom ignore files
@@ -63,6 +64,10 @@ pub struct Args {
     /// The maximum depth to recurse
     #[clap(short = 'd', long, aliases = ["depth", "level"])]
     pub max_depth: Option<usize>,
+
+    /// The output format to use (text, json, xml)
+    #[clap(long, default_value = "text")]
+    pub format: OutputFormat,
 }
 
 /// Parses command line arguments into the Args struct
