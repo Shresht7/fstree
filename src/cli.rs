@@ -1,5 +1,6 @@
 use clap::Parser;
 
+use crate::formatter::OutputFormat;
 use crate::helpers;
 
 /// Command line arguments for the fstree utility
@@ -63,6 +64,10 @@ pub struct Args {
     /// The maximum depth to recurse
     #[clap(short = 'd', long, aliases = ["depth", "level"])]
     pub max_depth: Option<usize>,
+
+    /// The output format to use (text, json, xml)
+    #[clap(long, default_value = "text")]
+    pub format: OutputFormat,
 }
 
 /// Parses command line arguments into the Args struct
