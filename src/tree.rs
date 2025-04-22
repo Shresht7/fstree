@@ -1,7 +1,7 @@
-use globset::GlobMatcher;
-use ignore::gitignore::Gitignore;
-
+use crate::filter::FileFilter;
+use crate::ignore;
 use crate::stats::Statistics;
+use globset::Glob;
 
 pub struct TreeNode {
     pub name: String,
@@ -13,26 +13,43 @@ pub struct TreeNode {
 
 pub struct TreeBuilder<'a> {
     pub args: &'a crate::cli::Args,
-    pub include_pattern: &'a Option<GlobMatcher>,
-    pub exclude_pattern: &'a Option<GlobMatcher>,
-    pub ignorer: &'a Gitignore,
+    file_filter: FileFilter,
     pub stats: Statistics,
 }
 
 impl<'a> TreeBuilder<'a> {
-    pub fn new(
-        args: &'a crate::cli::Args,
-        include_pattern: &'a Option<GlobMatcher>,
-        exclude_pattern: &'a Option<GlobMatcher>,
-        ignorer: &'a Gitignore,
-    ) -> Self {
-        Self {
+    pub fn new(args: &'a crate::cli::Args) -> Result<Self, Box<dyn std::error::Error>> {
+        // Setup ignore rules
+        let ignorer = ignore::setup_gitignore(&args.root, &args.ignore)
+            .unwrap_or_else(|_| ignore::Gitignore::empty());
+
+        // Compile pattern matchers
+        let include_pattern = args
+            .include
+            .as_ref()
+            .map(|pat| Glob::new(pat))
+            .transpose()?
+            .map(|g| g.compile_matcher());
+
+        let exclude_pattern = args
+            .exclude
+            .as_ref()
+            .map(|pat| Glob::new(pat))
+            .transpose()?
+            .map(|g| g.compile_matcher());
+
+        Ok(Self {
             args,
-            include_pattern,
-            exclude_pattern,
-            ignorer,
+            file_filter: FileFilter::new(
+                args.root.clone(),
+                args.directory,
+                args.show_all,
+                include_pattern,
+                exclude_pattern,
+                ignorer,
+            ),
             stats: Statistics::default(),
-        }
+        })
     }
 
     pub fn build<P: AsRef<std::path::Path>>(&mut self, path: P) -> std::io::Result<TreeNode> {
@@ -78,7 +95,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     fn read_dir<P: AsRef<std::path::Path>>(&mut self, path: P) -> std::io::Result<Vec<TreeNode>> {
-        let entries = self.filter_entries(path.as_ref())?;
+        let entries = self.file_filter.filter_entries(path.as_ref())?;
         let mut children = Vec::new();
 
         for entry in entries {
@@ -88,46 +105,6 @@ impl<'a> TreeBuilder<'a> {
         }
 
         Ok(children)
-    }
-
-    fn filter_entries(&self, path: &std::path::Path) -> std::io::Result<Vec<std::fs::DirEntry>> {
-        Ok(std::fs::read_dir(path)?
-            .filter_map(Result::ok)
-            .filter(|entry| {
-                let file_type = match entry.file_type() {
-                    Ok(ft) => ft,
-                    Err(_) => return false,
-                };
-                let file_name = entry.file_name().to_string_lossy().to_string();
-                let is_dir = file_type.is_dir();
-
-                if self.args.directory && !is_dir {
-                    return false;
-                }
-
-                if let Some(pattern) = self.include_pattern {
-                    if !is_dir && !pattern.is_match(&file_name) {
-                        return false;
-                    }
-                }
-
-                if let Some(pattern) = self.exclude_pattern {
-                    if !is_dir && pattern.is_match(&file_name) {
-                        return false;
-                    }
-                }
-
-                if !self.args.show_all {
-                    if let Ok(rel_path) = entry.path().strip_prefix(&self.args.root) {
-                        if self.ignorer.matched(rel_path, is_dir).is_ignore() {
-                            return false;
-                        }
-                    }
-                }
-
-                true
-            })
-            .collect())
     }
 
     pub fn get_stats(&self) -> &Statistics {
