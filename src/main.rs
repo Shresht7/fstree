@@ -3,8 +3,6 @@
 //! This program walks through directories and displays their contents in a
 //! hierarchical tree structure, similar to the Unix tree command.
 
-use std::error::Error;
-
 mod cli;
 mod filter;
 mod formatter;
@@ -22,7 +20,7 @@ fn main() {
 }
 
 /// Implementation of the main run logic of the command-line
-fn run(args: &cli::Args) -> Result<(), Box<dyn Error>> {
+fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     // Check if the path actually exists
     if !std::fs::exists(&args.root)? {
         return Err(Box::new(std::io::Error::new(
