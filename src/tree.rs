@@ -1,5 +1,4 @@
 use crate::filter::FileFilter;
-use crate::ignore;
 use crate::stats::Statistics;
 use globset::Glob;
 
@@ -19,10 +18,6 @@ pub struct TreeBuilder<'a> {
 
 impl<'a> TreeBuilder<'a> {
     pub fn new(args: &'a crate::cli::Args) -> Result<Self, Box<dyn std::error::Error>> {
-        // Setup ignore rules
-        let ignorer = ignore::setup_gitignore(&args.root, &args.ignore)
-            .unwrap_or_else(|_| ignore::Gitignore::empty());
-
         // Compile pattern matchers
         let include_pattern = args
             .include
@@ -46,8 +41,8 @@ impl<'a> TreeBuilder<'a> {
                 args.show_all,
                 include_pattern,
                 exclude_pattern,
-                ignorer,
-            ),
+                &args.ignore,
+            )?,
             stats: Statistics::default(),
         })
     }

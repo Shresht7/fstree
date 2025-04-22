@@ -9,7 +9,6 @@ mod cli;
 mod filter;
 mod formatter;
 mod helpers;
-mod ignore;
 mod stats;
 mod tree;
 
