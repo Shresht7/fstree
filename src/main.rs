@@ -47,17 +47,8 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
     let ignorer = ignore::setup_gitignore(&args.root, &args.ignore)
         .unwrap_or_else(|_| ignore::Gitignore::empty());
 
-    // Initialize statistics
-    let mut stats = stats::Statistics::default();
-
     // Build the tree
-    let mut builder = tree::TreeBuilder::new(
-        args,
-        &include_pattern,
-        &exclude_pattern,
-        &ignorer,
-        &mut stats,
-    );
+    let mut builder = tree::TreeBuilder::new(args, &include_pattern, &exclude_pattern, &ignorer);
     let tree = builder.build(&args.root)?;
 
     // Format and print the tree
@@ -67,7 +58,7 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
 
     // Print summary if requested
     if args.summary {
-        println!("\n{}", stats);
+        println!("\n{}", builder.get_stats());
     }
 
     Ok(())
