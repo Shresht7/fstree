@@ -1,4 +1,4 @@
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+pub use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
 /// Sets up gitignore handling for the given root path
 pub fn setup_gitignore<P: AsRef<std::path::Path>>(
