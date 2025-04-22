@@ -16,7 +16,7 @@ pub struct TreeBuilder<'a> {
     pub include_pattern: &'a Option<GlobMatcher>,
     pub exclude_pattern: &'a Option<GlobMatcher>,
     pub ignorer: &'a Gitignore,
-    pub stats: &'a mut Statistics,
+    pub stats: Statistics,
 }
 
 impl<'a> TreeBuilder<'a> {
@@ -25,14 +25,13 @@ impl<'a> TreeBuilder<'a> {
         include_pattern: &'a Option<GlobMatcher>,
         exclude_pattern: &'a Option<GlobMatcher>,
         ignorer: &'a Gitignore,
-        stats: &'a mut Statistics,
     ) -> Self {
         Self {
             args,
             include_pattern,
             exclude_pattern,
             ignorer,
-            stats,
+            stats: Statistics::default(),
         }
     }
 
@@ -129,5 +128,9 @@ impl<'a> TreeBuilder<'a> {
                 true
             })
             .collect())
+    }
+
+    pub fn get_stats(&self) -> &Statistics {
+        &self.stats
     }
 }
