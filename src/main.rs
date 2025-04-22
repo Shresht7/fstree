@@ -3,9 +3,10 @@
 //! This program walks through directories and displays their contents in a
 //! hierarchical tree structure, similar to the Unix tree command.
 
-use globset::Glob;
+use std::error::Error;
 
 mod cli;
+mod filter;
 mod formatter;
 mod helpers;
 mod ignore;
@@ -22,7 +23,7 @@ fn main() {
 }
 
 /// Implementation of the main run logic of the command-line
-fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
+fn run(args: &cli::Args) -> Result<(), Box<dyn Error>> {
     // Check if the path actually exists
     if !std::fs::exists(&args.root)? {
         return Err(Box::new(std::io::Error::new(
@@ -31,24 +32,8 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn std::error::Error>> {
         )));
     }
 
-    // Compile pattern matcher
-    let include_pattern = if let Some(pat) = &args.include {
-        Some(Glob::new(pat)?.compile_matcher())
-    } else {
-        None
-    };
-    let exclude_pattern = if let Some(pat) = &args.exclude {
-        Some(Glob::new(pat)?.compile_matcher())
-    } else {
-        None
-    };
-
-    // Setup ignore rules
-    let ignorer = ignore::setup_gitignore(&args.root, &args.ignore)
-        .unwrap_or_else(|_| ignore::Gitignore::empty());
-
     // Build the tree
-    let mut builder = tree::TreeBuilder::new(args, &include_pattern, &exclude_pattern, &ignorer);
+    let mut builder = tree::TreeBuilder::new(args)?;
     let tree = builder.build(&args.root)?;
 
     // Format and print the tree
