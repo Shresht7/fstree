@@ -1,6 +1,9 @@
-use globset::GlobMatcher;
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use std::path::{Path, PathBuf};
+
+use globset::{Glob, GlobMatcher};
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
+
+use crate::cli::Args;
 
 pub struct FileFilter {
     root: PathBuf,
@@ -12,21 +15,29 @@ pub struct FileFilter {
 }
 
 impl FileFilter {
-    pub fn new(
-        root: PathBuf,
-        only_directories: bool,
-        show_all: bool,
-        include_pattern: Option<GlobMatcher>,
-        exclude_pattern: Option<GlobMatcher>,
-        ignore_files: &[String],
-    ) -> Result<Self, ignore::Error> {
+    pub fn new(args: &Args) -> Result<Self, Box<dyn std::error::Error>> {
+        // Compile pattern matchers
+        let include_pattern = args
+            .include
+            .as_ref()
+            .map(|pat| Glob::new(pat))
+            .transpose()?
+            .map(|g| g.compile_matcher());
+
+        let exclude_pattern = args
+            .exclude
+            .as_ref()
+            .map(|pat| Glob::new(pat))
+            .transpose()?
+            .map(|g| g.compile_matcher());
+
         Ok(Self {
-            root: root.clone(),
-            only_directories,
-            show_all,
+            root: args.root.clone(),
+            only_directories: args.directory,
+            show_all: args.show_all,
             include_pattern,
             exclude_pattern,
-            ignorer: Self::setup_gitignore(&root, ignore_files)?,
+            ignorer: Self::setup_gitignore(&args.root, &args.ignore)?,
         })
     }
 

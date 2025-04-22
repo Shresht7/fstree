@@ -1,6 +1,6 @@
+use crate::cli::Args;
 use crate::filter::FileFilter;
 use crate::stats::Statistics;
-use globset::Glob;
 
 pub struct TreeNode {
     pub name: String,
@@ -11,38 +11,16 @@ pub struct TreeNode {
 }
 
 pub struct TreeBuilder<'a> {
-    pub args: &'a crate::cli::Args,
+    pub args: &'a Args,
     file_filter: FileFilter,
     pub stats: Statistics,
 }
 
 impl<'a> TreeBuilder<'a> {
-    pub fn new(args: &'a crate::cli::Args) -> Result<Self, Box<dyn std::error::Error>> {
-        // Compile pattern matchers
-        let include_pattern = args
-            .include
-            .as_ref()
-            .map(|pat| Glob::new(pat))
-            .transpose()?
-            .map(|g| g.compile_matcher());
-
-        let exclude_pattern = args
-            .exclude
-            .as_ref()
-            .map(|pat| Glob::new(pat))
-            .transpose()?
-            .map(|g| g.compile_matcher());
-
+    pub fn new(args: &'a Args) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             args,
-            file_filter: FileFilter::new(
-                args.root.clone(),
-                args.directory,
-                args.show_all,
-                include_pattern,
-                exclude_pattern,
-                &args.ignore,
-            )?,
+            file_filter: FileFilter::new(args)?,
             stats: Statistics::default(),
         })
     }
