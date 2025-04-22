@@ -37,13 +37,8 @@ fn run(args: &cli::Args) -> Result<(), Box<dyn Error>> {
 
     // Format and print the tree
     let formatter = formatter::get_formatter(&args.format);
-    let output = formatter.format(&tree, args)?;
+    let output = formatter.format(&tree, args, builder.get_stats())?;
     println!("{}", output);
-
-    // Print summary if requested
-    if args.summary {
-        println!("\n{}", builder.get_stats());
-    }
 
     Ok(())
 }

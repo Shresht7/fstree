@@ -5,7 +5,12 @@ use crate::helpers;
 use crate::tree::TreeNode;
 
 pub trait Formatter {
-    fn format(&self, node: &TreeNode, args: &Args) -> io::Result<String>;
+    fn format(
+        &self,
+        node: &TreeNode,
+        args: &Args,
+        stats: &crate::stats::Statistics,
+    ) -> io::Result<String>;
 }
 
 pub struct TextFormatter;
@@ -59,8 +64,20 @@ impl TextFormatter {
 }
 
 impl Formatter for TextFormatter {
-    fn format(&self, node: &TreeNode, args: &Args) -> io::Result<String> {
-        Ok(self.format_node(node, "", true, args))
+    fn format(
+        &self,
+        node: &TreeNode,
+        args: &Args,
+        stats: &crate::stats::Statistics,
+    ) -> io::Result<String> {
+        let mut output = self.format_node(node, "", true, args);
+
+        if args.summary {
+            output.push('\n');
+            output.push_str(&stats.to_string());
+        }
+
+        Ok(output)
     }
 }
 
