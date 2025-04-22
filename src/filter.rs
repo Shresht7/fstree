@@ -1,5 +1,5 @@
 use globset::GlobMatcher;
-use ignore::gitignore::Gitignore;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use std::path::{Path, PathBuf};
 
 pub struct FileFilter {
@@ -18,16 +18,42 @@ impl FileFilter {
         show_all: bool,
         include_pattern: Option<GlobMatcher>,
         exclude_pattern: Option<GlobMatcher>,
-        ignorer: Gitignore,
-    ) -> Self {
-        Self {
-            root,
+        ignore_files: &[String],
+    ) -> Result<Self, ignore::Error> {
+        Ok(Self {
+            root: root.clone(),
             only_directories,
             show_all,
             include_pattern,
             exclude_pattern,
-            ignorer,
+            ignorer: Self::setup_gitignore(&root, ignore_files)?,
+        })
+    }
+
+    /// Sets up gitignore handling for the given root path
+    fn setup_gitignore(root: &Path, ignore_files: &[String]) -> Result<Gitignore, ignore::Error> {
+        // Instantiate the ignore::GitignoreBuilder
+        let mut builder = GitignoreBuilder::new(root);
+
+        // Ignore the .git folder
+        builder.add_line(None, ".git")?;
+
+        // Add the project's .gitignore file if it exists
+        let gitignore_path = root.join(".gitignore");
+        if gitignore_path.exists() {
+            builder.add(gitignore_path);
         }
+
+        // Add custom ignore files
+        for ignore in ignore_files {
+            let path = root.join(ignore);
+            if path.exists() {
+                builder.add(path);
+            }
+        }
+
+        // Build the gitignore handler
+        Ok(builder.build()?)
     }
 
     pub fn should_include(&self, entry: &std::fs::DirEntry) -> bool {
