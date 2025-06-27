@@ -2,6 +2,11 @@ use crate::cli::Args;
 use crate::filter::FileFilter;
 use crate::stats::Statistics;
 
+/// Represents a node in the file system tree.
+///
+/// Each `TreeNode` contains information about a file or directory, including its name,
+/// path, whether it is a directory, its size (if applicable), and its children nodes
+/// (if it is a directory).
 pub struct TreeNode {
     pub name: String,
     pub path: std::path::PathBuf,
@@ -17,6 +22,7 @@ pub struct TreeBuilder<'a> {
 }
 
 impl<'a> TreeBuilder<'a> {
+    /// Creates a new `TreeBuilder` with the provided command line arguments.
     pub fn new(args: &'a Args) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             args,
@@ -25,6 +31,7 @@ impl<'a> TreeBuilder<'a> {
         })
     }
 
+    /// Builds a `TreeNode` representing the file system structure starting from the given path.
     pub fn build<P: AsRef<std::path::Path>>(&mut self, path: P) -> std::io::Result<TreeNode> {
         let path = path.as_ref();
         let metadata = std::fs::metadata(path)?;
@@ -67,6 +74,7 @@ impl<'a> TreeBuilder<'a> {
         Ok(node)
     }
 
+    /// Reads the directory entries at the specified path and builds `TreeNode` children for each entry.
     fn read_dir<P: AsRef<std::path::Path>>(&mut self, path: P) -> std::io::Result<Vec<TreeNode>> {
         let entries = self.file_filter.filter_entries(path.as_ref())?;
         let mut children = Vec::new();
@@ -80,6 +88,7 @@ impl<'a> TreeBuilder<'a> {
         Ok(children)
     }
 
+    /// Returns the statistics collected during the tree building process.
     pub fn get_stats(&self) -> &Statistics {
         &self.stats
     }
