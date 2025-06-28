@@ -20,37 +20,6 @@ pub trait Formatter {
 pub struct TextFormatter;
 
 impl TextFormatter {
-    /// Returns the display name for a `TreeNode` based on its type
-    fn get_display_name(&self, node: &TreeNode, ansi: bool) -> String {
-        match node.node_type {
-            NodeType::File => {
-                let name = node.name.clone();
-                if ansi {
-                    name.ansi(&[ANSI::BrightWhite])
-                } else {
-                    name
-                }
-            }
-            NodeType::Directory => {
-                if ansi {
-                    format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgYellow])
-                } else {
-                    format!("{}/", node.name)
-                }
-            }
-            NodeType::SymbolicLink => {
-                let target = std::fs::read_link(&node.path)
-                    .map(|p| p.to_string_lossy().to_string())
-                    .unwrap_or_else(|_| "<unreadable>".to_string());
-                if ansi {
-                    format!("{} -> {}", node.name, target).ansi(&[ANSI::BrightCyan])
-                } else {
-                    format!("{} -> {}", node.name, target)
-                }
-            }
-        }
-    }
-
     /// Recursively formats a tree node and its children
     ///
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
@@ -67,7 +36,7 @@ impl TextFormatter {
         };
 
         // Determine the display name based on the node type
-        let display_name = self.get_display_name(node, !args.no_color);
+        let display_name = self.format_display_name(node, !args.no_color);
 
         // Construct the current line with prefix, branch, and name
         let mut line = format!("{}{}{}", prefix, branch, display_name);
@@ -104,6 +73,37 @@ impl TextFormatter {
 
         output
     }
+
+    /// Returns the display name for a `TreeNode` based on its type
+    fn format_display_name(&self, node: &TreeNode, ansi: bool) -> String {
+        match node.node_type {
+            NodeType::File => {
+                let name = node.name.clone();
+                if ansi {
+                    name.ansi(&[ANSI::BrightWhite])
+                } else {
+                    name
+                }
+            }
+            NodeType::Directory => {
+                if ansi {
+                    format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgYellow])
+                } else {
+                    format!("{}/", node.name)
+                }
+            }
+            NodeType::SymbolicLink => {
+                let target = std::fs::read_link(&node.path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| "<unreadable>".to_string());
+                if ansi {
+                    format!("{} -> {}", node.name, target).ansi(&[ANSI::BrightCyan])
+                } else {
+                    format!("{} -> {}", node.name, target)
+                }
+            }
+        }
+    }
 }
 
 impl Formatter for TextFormatter {
@@ -117,7 +117,7 @@ impl Formatter for TextFormatter {
         let mut output = String::new();
 
         // Handle the root node without any prefix/indentation
-        let mut line = self.get_display_name(node, !args.no_color);
+        let mut line = self.format_display_name(node, !args.no_color);
 
         // Add file size to root if requested
         if args.size {
