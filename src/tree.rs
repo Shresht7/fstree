@@ -19,12 +19,14 @@ pub struct TreeBuilder<'a> {
     pub args: &'a Args,
     file_filter: FileFilter,
     pub stats: Statistics,
+    root: std::path::PathBuf,
 }
 
 impl<'a> TreeBuilder<'a> {
     /// Creates a new `TreeBuilder` with the provided command line arguments.
     pub fn new(args: &'a Args) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
+            root: args.root.clone(),
             args,
             file_filter: FileFilter::new(args)?,
             stats: Statistics::default(),
@@ -55,10 +57,14 @@ impl<'a> TreeBuilder<'a> {
             // Only traverse directory if within max_depth
             if let Some(max_depth) = self.args.max_depth {
                 let current_depth = path
-                    .components()
-                    .filter(|c| matches!(c, std::path::Component::Normal(_)))
-                    .count();
-                if current_depth <= max_depth {
+                    .strip_prefix(&self.root)
+                    .map(|p| {
+                        p.components()
+                            .filter(|c| matches!(c, std::path::Component::Normal(_)))
+                            .count()
+                    })
+                    .unwrap_or(0);
+                if current_depth < max_depth {
                     node.children = self.read_dir(path)?;
                 }
             } else {
