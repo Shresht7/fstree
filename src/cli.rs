@@ -68,6 +68,10 @@ pub struct Args {
     /// The output format to use (text, json, xml)
     #[clap(long, default_value = "text")]
     pub format: OutputFormat,
+
+    /// Disable ANSI colors
+    #[clap(long, alias="plain", default_value_t = std::env::var("NO_COLOR").is_ok_and(|v| v.to_lowercase() == "true"))]
+    pub no_color: bool,
 }
 
 /// Parses command line arguments into the Args struct
