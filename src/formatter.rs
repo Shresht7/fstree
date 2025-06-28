@@ -35,7 +35,7 @@ impl TextFormatter {
                 if ansi {
                     format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgBrightBlue])
                 } else {
-                    format!(" {} ", node.name)
+                    format!("{}/", node.name)
                 }
             }
             NodeType::SymbolicLink => {
