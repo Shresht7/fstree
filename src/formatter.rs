@@ -2,7 +2,7 @@ use std::io;
 
 use crate::cli::Args;
 use crate::helpers;
-use crate::tree::TreeNode;
+use crate::tree::{NodeType, TreeNode};
 
 /// Defines the interface for different output formatters
 pub trait Formatter {
@@ -19,6 +19,20 @@ pub trait Formatter {
 pub struct TextFormatter;
 
 impl TextFormatter {
+    /// Returns the display name for a `TreeNode` based on its type
+    fn get_display_name(&self, node: &TreeNode) -> String {
+        match node.node_type {
+            NodeType::File => node.name.clone(),
+            NodeType::Directory => format!("{}/", node.name),
+            NodeType::SymbolicLink => {
+                let target = std::fs::read_link(&node.path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| "<unreadable>".to_string());
+                format!("{} -> {}", node.name, target)
+            }
+        }
+    }
+
     /// Recursively formats a tree node and its children
     ///
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
@@ -34,12 +48,8 @@ impl TextFormatter {
             &args.prefix
         };
 
-        // Append '/' to directory names for clarity
-        let display_name = if node.is_dir {
-            format!("{}/", node.name)
-        } else {
-            node.name.clone()
-        };
+        // Determine the display name based on the node type
+        let display_name = self.get_display_name(node);
 
         // Construct the current line with prefix, branch, and name
         let mut line = format!("{}{}{}", prefix, branch, display_name);
@@ -89,11 +99,7 @@ impl Formatter for TextFormatter {
         let mut output = String::new();
 
         // Handle the root node without any prefix/indentation
-        let mut line = if node.is_dir {
-            format!("{}/", node.name)
-        } else {
-            node.name.clone()
-        };
+        let mut line = self.get_display_name(node);
 
         // Add file size to root if requested
         if args.size {
