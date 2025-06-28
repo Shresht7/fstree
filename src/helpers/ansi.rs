@@ -2,13 +2,15 @@
 // ANSI CODES
 // ----------
 
-/// ANSI escape codes for text formatting
+/// ANSI escape codes
 #[derive(Clone, Copy)]
 #[repr(u8)]
 #[allow(dead_code)]
 pub enum ANSI {
-    // Style codes
+    // Reset all attributes
     Reset = 0,
+
+    // Styles
     Bold,
     Faint,
     Italic,
