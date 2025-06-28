@@ -2,6 +2,7 @@ use std::io;
 
 use crate::cli::Args;
 use crate::helpers;
+use crate::helpers::ansi::{ANSI, ANSIString};
 use crate::tree::{NodeType, TreeNode};
 
 /// Defines the interface for different output formatters
@@ -22,13 +23,15 @@ impl TextFormatter {
     /// Returns the display name for a `TreeNode` based on its type
     fn get_display_name(&self, node: &TreeNode) -> String {
         match node.node_type {
-            NodeType::File => node.name.clone(),
-            NodeType::Directory => format!("{}/", node.name),
+            NodeType::File => node.name.clone().ansi(&[ANSI::BrightWhite]),
+            NodeType::Directory => {
+                format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgBrightYellow])
+            }
             NodeType::SymbolicLink => {
                 let target = std::fs::read_link(&node.path)
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|_| "<unreadable>".to_string());
-                format!("{} -> {}", node.name, target)
+                format!("{} -> {}", node.name, target).ansi(&[ANSI::BrightCyan])
             }
         }
     }
