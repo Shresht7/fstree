@@ -70,7 +70,7 @@ pub struct Args {
     pub format: OutputFormat,
 
     /// Disable ANSI colors
-    #[clap(long, alias="plain", default_value_t = std::env::var("NO_COLOR").is_ok_and(|v| v.to_lowercase() == "true"))]
+    #[clap(long, alias="plain", default_value_t = std::env::var("NO_COLOR").is_ok())]
     pub no_color: bool,
 }
 
