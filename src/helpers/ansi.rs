@@ -78,27 +78,16 @@ impl std::fmt::Display for ANSI {
 }
 
 pub trait ANSIString {
-    fn ansi(self, codes: &[ANSI]) -> String;
+    fn ansi(&self, codes: &[ANSI]) -> String;
 }
 
-impl ANSIString for &str {
-    fn ansi(self, codes: &[ANSI]) -> String {
+impl<T: AsRef<str>> ANSIString for T {
+    fn ansi(&self, codes: &[ANSI]) -> String {
         let codes_str = codes
             .iter()
             .map(|c| c.to_string())
             .collect::<Vec<_>>()
             .join(";");
-        format!("\u{001b}[{}m{}\u{001b}[0m", codes_str, self)
-    }
-}
-
-impl ANSIString for String {
-    fn ansi(self, codes: &[ANSI]) -> String {
-        let codes_str = codes
-            .iter()
-            .map(|c| c.to_string())
-            .collect::<Vec<_>>()
-            .join(";");
-        format!("\u{001b}[{}m{}\u{001b}[0m", codes_str, &self)
+        format!("\u{001b}[{}m{}\u{001b}[0m", codes_str, self.as_ref())
     }
 }
