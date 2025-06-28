@@ -110,15 +110,8 @@ impl<'a> TreeBuilder<'a> {
                 }
             }
 
-            NodeType::File => {
+            NodeType::File | NodeType::SymbolicLink => {
                 self.stats.add_files(1);
-                if let Some(size) = size {
-                    self.stats.add_byte_size(size);
-                }
-            }
-
-            NodeType::SymbolicLink => {
-                self.stats.add_files(1); // Treat symlinks as files for stats
                 if let Some(size) = size {
                     self.stats.add_byte_size(size);
                 }
