@@ -26,14 +26,14 @@ impl TextFormatter {
             NodeType::File => {
                 let name = node.name.clone();
                 if ansi {
-                    name.ansi(&[ANSI::BrightGreen])
+                    name.ansi(&[ANSI::BrightWhite])
                 } else {
                     name
                 }
             }
             NodeType::Directory => {
                 if ansi {
-                    format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgBrightBlue])
+                    format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgYellow])
                 } else {
                     format!("{}/", node.name)
                 }
