@@ -1,3 +1,5 @@
+//! Describes the command-line interface
+
 use clap::Parser;
 
 use crate::formatter::OutputFormat;

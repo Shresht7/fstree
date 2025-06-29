@@ -1,8 +1,8 @@
-//! Configuration management for `fstree`.
+//! Manages the configuration
 //!
 //! This module handles loading, merging, and providing access to the application's
 //! configuration, which can be sourced from a configuration file (e.g., `~/.config/fstree/config.json`)
-//! and command-line arguments.
+//! and command-line arguments
 
 use serde::Deserialize;
 use std::fs;
@@ -12,53 +12,60 @@ use crate::cli;
 use crate::formatter::OutputFormat;
 use crate::helpers;
 
-/// Represents the final, merged configuration from all sources.
+/// Represents the final, merged configuration from all sources
 pub struct Config {
+    /// The root directory to start the tree from
     pub root: PathBuf,
+    /// Whether to show the full_path for each entry
     pub full_path: bool,
+    /// The prefix string to use for each level of the tree
     pub prefix: String,
+    /// The prefix string to use for the last entry of each branch
     pub last_prefix: String,
+    /// The prefix string to use for child entries
     pub child_prefix: String,
+    /// Whether to show all files and directories, including hidden files
     pub show_all: bool,
+    /// A pattern to include files that match the glob syntax
     pub include: Option<String>,
+    /// A pattern to exclude files that match the glob syntax
     pub exclude: Option<String>,
+    /// Custom ignore files
     pub ignore: Vec<String>,
+    /// Whether to show only directories
     pub directory: bool,
+    /// Whether to show a summary of directory and file counts
     pub summary: bool,
+    /// Whether to show the filesize next to the name
     pub size: bool,
+    /// The format to use for the filesize (e.g., Bytes, KiloBytes, etc.)
     pub size_format: helpers::bytes::Format,
+    /// The maximum depth to traverse the directory tree
     pub max_depth: Option<usize>,
+    /// The output format for the tree (e.g., text, json, etc.)
     pub format: OutputFormat,
+    /// Whether to disable ANSI colors in the output
     pub no_color: bool,
 }
 
 /// Merges settings from the config file and CLI arguments.
-///
-/// CLI arguments take precedence over the config file, which takes precedence over defaults.
+/// CLI arguments take precedence over the config file, which takes precedence over defaults
 pub fn merge(file: FileConfig, cli: cli::Args) -> Config {
     Config {
         // CLI > File > Default
         root: cli.root.unwrap_or_else(|| PathBuf::from(".")),
-
-        // CLI flags are booleans, so they are always present
         full_path: merge_options(cli.full_path, file.full_path, false),
         show_all: merge_options(cli.show_all, file.show_all, false),
         directory: merge_options(cli.directory, file.directory, false),
         summary: merge_options(cli.summary, file.summary, false),
         size: merge_options(cli.size, file.size, false),
         no_color: merge_options(cli.no_color, file.no_color, false),
-
-        // CLI > File > Default
         prefix: merge_options(cli.prefix, file.prefix, "├── ".to_string()),
         last_prefix: merge_options(cli.last_prefix, file.last_prefix, "└── ".to_string()),
         child_prefix: merge_options(cli.child_prefix, file.child_prefix, "│   ".to_string()),
-
-        // These are optional and can remain None
         include: merge_options(Some(cli.include), Some(file.include), None),
         exclude: merge_options(Some(cli.exclude), Some(file.exclude), None),
         max_depth: merge_options(Some(cli.max_depth), Some(file.max_depth), None),
-
-        // CLI > File > Default
         ignore: merge_options(cli.ignore, file.ignore, Vec::new()),
         size_format: merge_options(
             cli.size_format,
@@ -69,21 +76,22 @@ pub fn merge(file: FileConfig, cli: cli::Args) -> Config {
     }
 }
 
-/// Merges three optional values, prioritizing CLI, then file, then a default value.
+/// Merges three optional values, prioritizing CLI, then file, then a default value
 fn merge_options<T: Clone>(cli: Option<T>, file: Option<T>, default: T) -> T {
     cli.or(file).unwrap_or(default)
 }
 
+// Converts the CLI arguments into a Config object
 impl From<cli::Args> for Config {
     fn from(value: cli::Args) -> Self {
         return merge(FileConfig::default(), value);
     }
 }
 
-/// Represents the structure of the configuration file.
+/// Represents the structure of the configuration file
 ///
 /// Fields are optional, allowing users to only specify the settings
-/// they want to override.
+/// they want to override
 #[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct FileConfig {
@@ -104,11 +112,10 @@ pub struct FileConfig {
     pub no_color: Option<bool>,
 }
 
-/// Returns the path to the configuration file.
+/// Returns the path to the configuration file
 ///
-/// The path is standardized to `~/.config/fstree/config.json` for all platforms.
+/// The path is standardized to `~/.config/fstree/config.json` for all platforms
 fn get_config_path() -> Option<PathBuf> {
-    
     let home_dir = if cfg!(windows) {
         std::env::var("USERPROFILE").ok()
     } else {
@@ -123,10 +130,10 @@ fn get_config_path() -> Option<PathBuf> {
     })
 }
 
-/// Loads the configuration from the file system.
+/// Loads the configuration from the file system
 ///
 /// Reads and parses the JSON configuration file. If the file doesn't exist,
-/// is inaccessible, or contains invalid JSON, it returns a default, empty configuration.
+/// is inaccessible, or contains invalid JSON, it returns a default, empty configuration
 pub fn load_file() -> FileConfig {
     if let Some(path) = get_config_path() {
         if let Ok(content) = fs::read_to_string(&path) {
@@ -134,7 +141,7 @@ pub fn load_file() -> FileConfig {
             if content.trim().is_empty() {
                 return FileConfig::default();
             }
-            // Attempt to parse the config, printing an error if it fails.
+            // Attempt to parse the config, printing an error if it fails
             match serde_json::from_str(&content) {
                 Ok(config) => return config,
                 Err(e) => {
