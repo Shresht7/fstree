@@ -175,7 +175,6 @@ pub fn get_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
     match format {
         OutputFormat::Text => Box::new(TextFormatter),
         OutputFormat::Json => Box::new(JsonFormatter),
-        // OutputFormat::Xml => Box::new(XmlFormatter),   // TODO: Implement XML formatter
     }
 }
 
@@ -184,7 +183,6 @@ pub fn get_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
 pub enum OutputFormat {
     Text,
     Json,
-    // Xml,  // TODO: XML output
 }
 
 impl std::str::FromStr for OutputFormat {
@@ -193,7 +191,6 @@ impl std::str::FromStr for OutputFormat {
         match s.to_lowercase().as_str() {
             "text" => Ok(Self::Text),
             "json" => Ok(Self::Json),
-            // "xml" => Ok(Self::Xml),
             e => Err(format!("Unknown output format: {}", e)),
         }
     }
