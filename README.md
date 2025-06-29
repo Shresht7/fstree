@@ -2,7 +2,7 @@
 
 A command-line utility that displays directory structure in a tree-like format.
 
-## Features
+## 🌟 Features
 
 - **Flexible Filtering**: Include or exclude files and directories using glob patterns.
 - **Multiple Output Formats**: Choose between plain text, JSON, or other structured formats.
@@ -15,15 +15,15 @@ A command-line utility that displays directory structure in a tree-like format.
 
 ---
 
-## Installation
+<!-- ## Installation
 
 You can install `fstree` using `cargo`:
 
 ```sh
 cargo install fstree
-```
+``` -->
 
-## Usage
+## 📖 Usage
 
 ```sh
 fstree [OPTIONS] [ROOT]
@@ -51,6 +51,6 @@ fstree [OPTIONS] [ROOT]
 
 ---
 
-## License
+## 📄 License
 
 This project is licensed under the [MIT License](./LICENSE).
