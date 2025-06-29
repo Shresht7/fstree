@@ -3,6 +3,8 @@
 //! This program walks through directories and displays their contents in a
 //! hierarchical tree structure, similar to the Unix tree command.
 
+use crate::config::ConfigBuilder;
+
 mod cli;
 mod config;
 mod filter;
@@ -29,11 +31,11 @@ fn main() {
 fn setup_configuration(args: cli::Args) -> config::Config {
     if args.no_config {
         // If `no_config` is set, use only the command-line arguments
-        args.into()
+        ConfigBuilder::from(args).build()
     } else {
         // Load the configuration file and merge it with the command-line arguments
         let config_file = config::load_file();
-        config::merge(config_file, args)
+        ConfigBuilder::from(config_file).merge(args.into()).build()
     }
 }
 

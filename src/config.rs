@@ -48,43 +48,119 @@ pub struct Config {
     pub no_color: bool,
 }
 
-/// Merges settings from the config file and CLI arguments.
-/// CLI arguments take precedence over the config file, which takes precedence over defaults
-pub fn merge(file: FileConfig, cli: cli::Args) -> Config {
-    Config {
-        // CLI > File > Default
-        root: cli.root.unwrap_or_else(|| PathBuf::from(".")),
-        full_path: merge_options(cli.full_path, file.full_path, false),
-        show_all: merge_options(cli.show_all, file.show_all, false),
-        directory: merge_options(cli.directory, file.directory, false),
-        summary: merge_options(cli.summary, file.summary, false),
-        size: merge_options(cli.size, file.size, false),
-        no_color: merge_options(cli.no_color, file.no_color, false),
-        prefix: merge_options(cli.prefix, file.prefix, "├── ".to_string()),
-        last_prefix: merge_options(cli.last_prefix, file.last_prefix, "└── ".to_string()),
-        child_prefix: merge_options(cli.child_prefix, file.child_prefix, "│   ".to_string()),
-        include: merge_options(Some(cli.include), Some(file.include), None),
-        exclude: merge_options(Some(cli.exclude), Some(file.exclude), None),
-        max_depth: merge_options(Some(cli.max_depth), Some(file.max_depth), None),
-        ignore: merge_options(cli.ignore, file.ignore, Vec::new()),
-        size_format: merge_options(
-            cli.size_format,
-            file.size_format,
-            helpers::bytes::Format::Bytes,
-        ),
-        format: merge_options(cli.format, file.format, OutputFormat::Text),
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            root: PathBuf::from("."),
+            full_path: false,
+            prefix: "├── ".to_string(),
+            last_prefix: "└── ".to_string(),
+            child_prefix: "│   ".to_string(),
+            show_all: false,
+            include: None,
+            exclude: None,
+            ignore: Vec::new(),
+            directory: false,
+            summary: false,
+            size: false,
+            size_format: helpers::bytes::Format::Bytes,
+            max_depth: None,
+            format: OutputFormat::Text,
+            no_color: false,
+        }
     }
 }
 
-/// Merges three optional values, prioritizing CLI, then file, then a default value
-fn merge_options<T: Clone>(cli: Option<T>, file: Option<T>, default: T) -> T {
-    cli.or(file).unwrap_or(default)
+/// Represents an intermediate configuration builder, where all fields are optional.
+/// This is used to merge configurations from different sources (CLI, file).
+#[derive(Default, Debug)]
+pub struct ConfigBuilder {
+    pub root: Option<PathBuf>,
+    pub full_path: Option<bool>,
+    pub prefix: Option<String>,
+    pub last_prefix: Option<String>,
+    pub child_prefix: Option<String>,
+    pub show_all: Option<bool>,
+    pub include: Option<String>,
+    pub exclude: Option<String>,
+    pub ignore: Option<Vec<String>>,
+    pub directory: Option<bool>,
+    pub summary: Option<bool>,
+    pub size: Option<bool>,
+    pub size_format: Option<helpers::bytes::Format>,
+    pub max_depth: Option<usize>,
+    pub format: Option<OutputFormat>,
+    pub no_color: Option<bool>,
 }
 
-// Converts the CLI arguments into a Config object
-impl From<cli::Args> for Config {
-    fn from(value: cli::Args) -> Self {
-        return merge(FileConfig::default(), value);
+impl ConfigBuilder {
+    /// Merges another ConfigBuilder into self, prioritizing values from `self`.
+    /// This effectively means `self` (e.g., CLI) overrides `other` (e.g., file).
+    pub fn merge(mut self, other: ConfigBuilder) -> Self {
+        self.root = self.root.or(other.root);
+        self.full_path = self.full_path.or(other.full_path);
+        self.prefix = self.prefix.or(other.prefix);
+        self.last_prefix = self.last_prefix.or(other.last_prefix);
+        self.child_prefix = self.child_prefix.or(other.child_prefix);
+        self.show_all = self.show_all.or(other.show_all);
+        self.include = self.include.or(other.include);
+        self.exclude = self.exclude.or(other.exclude);
+        self.ignore = self.ignore.or(other.ignore);
+        self.directory = self.directory.or(other.directory);
+        self.summary = self.summary.or(other.summary);
+        self.size = self.size.or(other.size);
+        self.size_format = self.size_format.or(other.size_format);
+        self.max_depth = self.max_depth.or(other.max_depth);
+        self.format = self.format.or(other.format);
+        self.no_color = self.no_color.or(other.no_color);
+        self
+    }
+
+    /// Builds the final Config struct from the ConfigBuilder, applying default values.
+    pub fn build(self) -> Config {
+        let default_config = Config::default();
+        Config {
+            root: self.root.unwrap_or(default_config.root),
+            full_path: self.full_path.unwrap_or(default_config.full_path),
+            prefix: self.prefix.unwrap_or(default_config.prefix),
+            last_prefix: self.last_prefix.unwrap_or(default_config.last_prefix),
+            child_prefix: self.child_prefix.unwrap_or(default_config.child_prefix),
+            show_all: self.show_all.unwrap_or(default_config.show_all),
+            include: self.include.or(default_config.include),
+            exclude: self.exclude.or(default_config.exclude),
+            ignore: self.ignore.unwrap_or(default_config.ignore),
+            directory: self.directory.unwrap_or(default_config.directory),
+            summary: self.summary.unwrap_or(default_config.summary),
+            size: self.size.unwrap_or(default_config.size),
+            size_format: self.size_format.unwrap_or(default_config.size_format),
+            max_depth: self.max_depth.or(default_config.max_depth),
+            format: self.format.unwrap_or(default_config.format),
+            no_color: self.no_color.unwrap_or(default_config.no_color),
+        }
+    }
+}
+
+/// Converts CLI arguments into a ConfigBuilder
+impl From<cli::Args> for ConfigBuilder {
+    fn from(args: cli::Args) -> Self {
+        ConfigBuilder {
+            root: args.root,
+            full_path: args.full_path,
+            prefix: args.prefix,
+            last_prefix: args.last_prefix,
+            child_prefix: args.child_prefix,
+            show_all: args.show_all,
+            include: args.include,
+            exclude: args.exclude,
+            ignore: args.ignore,
+            directory: args.directory,
+            summary: args.summary,
+            size: args.size,
+            size_format: args.size_format,
+            max_depth: args.max_depth,
+            format: args.format,
+            no_color: args.no_color,
+        }
     }
 }
 
@@ -110,6 +186,31 @@ pub struct FileConfig {
     pub max_depth: Option<usize>,
     pub format: Option<OutputFormat>,
     pub no_color: Option<bool>,
+}
+
+/// Converts FileConfig into a ConfigBuilder
+impl From<FileConfig> for ConfigBuilder {
+    fn from(file_config: FileConfig) -> Self {
+        ConfigBuilder {
+            full_path: file_config.full_path,
+            prefix: file_config.prefix,
+            last_prefix: file_config.last_prefix,
+            child_prefix: file_config.child_prefix,
+            show_all: file_config.show_all,
+            include: file_config.include,
+            exclude: file_config.exclude,
+            ignore: file_config.ignore,
+            directory: file_config.directory,
+            summary: file_config.summary,
+            size: file_config.size,
+            size_format: file_config.size_format,
+            max_depth: file_config.max_depth,
+            format: file_config.format,
+            no_color: file_config.no_color,
+            // Root is not part of FileConfig, so it remains None
+            root: None,
+        }
+    }
 }
 
 /// Returns the path to the configuration file
