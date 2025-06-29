@@ -1,3 +1,5 @@
+//! Describes the command-line interface
+
 use clap::Parser;
 
 use crate::formatter::OutputFormat;
@@ -7,27 +9,26 @@ use crate::helpers;
 ///
 /// This struct holds the configuration options that can be passed
 /// to the program through command line arguments.
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(author, version, about)]
 pub struct Args {
     /// The directory path to generate the tree from
-    #[clap(default_value = ".")]
-    pub root: std::path::PathBuf,
+    pub root: Option<std::path::PathBuf>,
 
     /// Show full path for each file entry
     #[clap(short, long)]
     pub full_path: bool,
 
     /// The prefix string to use for each level of the tree
-    #[clap(short, long, default_value = "├── ")]
-    pub prefix: String,
+    #[clap(short, long)]
+    pub prefix: Option<String>,
 
     /// The prefix string to use for the last entry of each branch
-    #[clap(short, long, default_value = "└── ")]
-    pub last_prefix: String,
+    #[clap(short, long)]
+    pub last_prefix: Option<String>,
 
-    #[clap(short, long, default_value = "│   ")]
-    pub child_prefix: String,
+    #[clap(short, long)]
+    pub child_prefix: Option<String>,
 
     /// Show all files and directories, including hidden files
     #[clap(short = 'a', long, alias = "all")]
@@ -43,7 +44,7 @@ pub struct Args {
 
     /// Custom ignore files
     #[clap(long, alias = "ignore-file")]
-    pub ignore: Vec<String>,
+    pub ignore: Option<Vec<String>>,
 
     /// Show only directories
     #[clap(long, aliases = ["dir", "folder"])]
@@ -58,20 +59,24 @@ pub struct Args {
     pub size: bool,
 
     /// The format to use for the filesize. e.g. Bytes (B), KiloBytes (KB), MegaBytes (MB), GigaBytes (GB) etc.
-    #[clap(long, default_value = "bytes")]
-    pub size_format: helpers::bytes::Format,
+    #[clap(long)]
+    pub size_format: Option<helpers::bytes::Format>,
 
     /// The maximum depth to recurse
     #[clap(short = 'd', long, aliases = ["depth", "level"])]
     pub max_depth: Option<usize>,
 
     /// The output format to use (text, json, xml)
-    #[clap(long, default_value = "text")]
-    pub format: OutputFormat,
+    #[clap(long)]
+    pub format: Option<OutputFormat>,
 
     /// Disable ANSI colors
-    #[clap(long, alias="plain", default_value_t = std::env::var("NO_COLOR").is_ok())]
+    #[clap(long, alias = "plain")]
     pub no_color: bool,
+
+    /// Disables loading the configuration file
+    #[clap(long, alias = "nocfg")]
+    pub no_config: bool,
 }
 
 /// Parses command line arguments into the Args struct

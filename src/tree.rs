@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-use crate::cli::Args;
+use crate::config::Config;
 use crate::filter::FileFilter;
 use crate::stats::Statistics;
 
@@ -31,7 +31,7 @@ pub struct TreeNode {
 /// The builder responsible for constructing a file system tree based on the provided command line arguments
 pub struct TreeBuilder<'a> {
     /// The command line arguments used to configure the tree building process
-    pub args: &'a Args,
+    pub cfg: &'a Config,
     /// The root path from which the tree is built
     root: std::path::PathBuf,
     /// The file filter used to determine which files and directories to include in the tree
@@ -44,11 +44,11 @@ pub struct TreeBuilder<'a> {
 
 impl<'a> TreeBuilder<'a> {
     /// Creates a new `TreeBuilder` with the provided command line arguments.
-    pub fn new(args: &'a Args) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(cfg: &'a Config) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
-            root: args.root.clone(),
-            args,
-            file_filter: FileFilter::new(args)?,
+            root: cfg.root.clone(),
+            cfg,
+            file_filter: FileFilter::new(cfg)?,
             stats: Statistics::default(),
             visited: HashSet::new(),
         })
@@ -97,7 +97,7 @@ impl<'a> TreeBuilder<'a> {
 
                 self.stats.add_dirs(1);
                 // Only traverse directory if within max_depth
-                if let Some(max_depth) = self.args.max_depth {
+                if let Some(max_depth) = self.cfg.max_depth {
                     let current_depth = path
                         .strip_prefix(&self.root)
                         .map(|p| {

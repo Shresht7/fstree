@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::cli::Args;
+use crate::config::Config;
 use crate::helpers;
 use crate::helpers::ansi::{ANSI, ANSIString};
 use crate::tree::{NodeType, TreeNode};
@@ -11,7 +11,7 @@ pub trait Formatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &Args,
+        cfg: &Config,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String>;
 }
@@ -24,29 +24,29 @@ impl TextFormatter {
     ///
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
     /// `is_last`: True if the node is the last child of its parent, influencing branch characters
-    /// `args`: The command line arguments that control formatting options
-    fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, args: &Args) -> String {
+    /// `cfg`: The command line arguments that control formatting options
+    fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, cfg: &Config) -> String {
         let mut output = String::new();
 
         // Determine the correct branch character (├── or └──)
         let branch = if is_last {
-            &args.last_prefix
+            &cfg.last_prefix
         } else {
-            &args.prefix
+            &cfg.prefix
         };
 
         // Determine the display name based on the node type
-        let display_name = self.format_display_name(node, !args.no_color);
+        let display_name = self.format_display_name(node, !cfg.no_color);
 
         // Construct the current line with prefix, branch, and name
         let mut line = format!("{}{}{}", prefix, branch, display_name);
 
         // Add file size if requested
-        if args.size {
+        if cfg.size {
             if let Some(size) = node.size {
                 line.push_str(&format!(
                     " ({})",
-                    helpers::bytes::format(size, &args.size_format)
+                    helpers::bytes::format(size, &cfg.size_format)
                 ));
             }
         }
@@ -56,9 +56,9 @@ impl TextFormatter {
 
         // Determine the prefix for children based on whether the current node is the last
         let child_prefix = if is_last {
-            format!("{}    ", prefix) // No vertical line for the last child's children
+            format!("{}    ", prefix)
         } else {
-            format!("{}│   ", prefix) // Vertical line for non-last children
+            format!("{}{}", prefix, &cfg.child_prefix)
         };
 
         // Recursively format children
@@ -67,7 +67,7 @@ impl TextFormatter {
                 child,
                 &child_prefix,
                 i == node.children.len() - 1, // Check if this child is the last
-                args,
+                cfg,
             ));
         }
 
@@ -111,20 +111,20 @@ impl Formatter for TextFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &Args,
+        cfg: &Config,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
         let mut output = String::new();
 
         // Handle the root node without any prefix/indentation
-        let mut line = self.format_display_name(node, !args.no_color);
+        let mut line = self.format_display_name(node, !cfg.no_color);
 
         // Add file size to root if requested
-        if args.size {
+        if cfg.size {
             if let Some(size) = node.size {
                 line.push_str(&format!(
                     " ({})",
-                    helpers::bytes::format(size, &args.size_format)
+                    helpers::bytes::format(size, &cfg.size_format)
                 ));
             }
         }
@@ -139,12 +139,12 @@ impl Formatter for TextFormatter {
                 child,
                 "", // Children of the root start with no prefix, format_node handles their indentation
                 i == node.children.len() - 1,
-                args,
+                cfg,
             ));
         }
 
         // Append summary if requested
-        if args.summary {
+        if cfg.summary {
             output.push('\n');
             output.push_str(&stats.to_string());
         }
@@ -159,7 +159,7 @@ impl Formatter for JsonFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        _args: &Args,
+        _cfg: &Config,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
         let output = serde_json::json!({
@@ -179,7 +179,7 @@ pub fn get_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
 }
 
 /// Defines the supported output formats for the tree
-#[derive(Clone)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub enum OutputFormat {
     Text,
     Json,
