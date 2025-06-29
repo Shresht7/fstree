@@ -48,6 +48,23 @@ fstree [OPTIONS] [ROOT]
 | `-d`  | `--max-depth`    | The maximum depth to recurse.                                    |         |
 |       | `--format`       | The output format to use (`text`, `json`).                       | `text`  |
 |       | `--no-color`     | Disable ANSI colors.                                             |         |
+|       | `--no-config`    | Do not load configuration from `config.json`.                    | `false` |
+
+## ⚙️ Configuration
+
+`fstree` supports loading configuration from a `config.json` file located at `~/.config/fstree/config.json`.
+
+Command-line arguments take precedence over settings in the configuration file. You can prevent `fstree` from loading the configuration file using the `--no-config` option.
+
+Example `config.json`:
+
+```json
+{
+  "full-path": true,
+  "max-depth": 3,
+  "no-color": false
+}
+```
 
 ---
 
