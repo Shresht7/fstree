@@ -171,42 +171,42 @@ impl From<cli::Args> for ConfigBuilder {
 #[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct FileConfig {
-    pub full_path: bool,
+    pub full_path: Option<bool>,
     pub prefix: Option<String>,
     pub last_prefix: Option<String>,
     pub child_prefix: Option<String>,
-    pub show_all: bool,
+    pub show_all: Option<bool>,
     pub include: Option<String>,
     pub exclude: Option<String>,
     pub ignore: Option<Vec<String>>,
-    pub directory: bool,
-    pub summary: bool,
-    pub size: bool,
+    pub directory: Option<bool>,
+    pub summary: Option<bool>,
+    pub size: Option<bool>,
     pub size_format: Option<helpers::bytes::Format>,
     pub max_depth: Option<usize>,
     pub format: Option<OutputFormat>,
-    pub no_color: bool,
+    pub no_color: Option<bool>,
 }
 
 /// Converts FileConfig into a ConfigBuilder
 impl From<FileConfig> for ConfigBuilder {
     fn from(file_config: FileConfig) -> Self {
         ConfigBuilder {
-            full_path: file_config.full_path,
+            full_path: file_config.full_path.unwrap_or_default(),
             prefix: file_config.prefix,
             last_prefix: file_config.last_prefix,
             child_prefix: file_config.child_prefix,
-            show_all: file_config.show_all,
+            show_all: file_config.show_all.unwrap_or_default(),
             include: file_config.include,
             exclude: file_config.exclude,
             ignore: file_config.ignore,
-            directory: file_config.directory,
-            summary: file_config.summary,
-            size: file_config.size,
+            directory: file_config.directory.unwrap_or_default(),
+            summary: file_config.summary.unwrap_or_default(),
+            size: file_config.size.unwrap_or_default(),
             size_format: file_config.size_format,
             max_depth: file_config.max_depth,
             format: file_config.format,
-            no_color: file_config.no_color,
+            no_color: file_config.no_color.unwrap_or_default(),
             // Root is not part of FileConfig, so it remains None
             root: None,
         }
