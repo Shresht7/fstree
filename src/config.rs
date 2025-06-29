@@ -76,21 +76,21 @@ impl Default for Config {
 #[derive(Default, Debug)]
 pub struct ConfigBuilder {
     pub root: Option<PathBuf>,
-    pub full_path: Option<bool>,
+    pub full_path: bool,
     pub prefix: Option<String>,
     pub last_prefix: Option<String>,
     pub child_prefix: Option<String>,
-    pub show_all: Option<bool>,
+    pub show_all: bool,
     pub include: Option<String>,
     pub exclude: Option<String>,
     pub ignore: Option<Vec<String>>,
-    pub directory: Option<bool>,
-    pub summary: Option<bool>,
-    pub size: Option<bool>,
+    pub directory: bool,
+    pub summary: bool,
+    pub size: bool,
     pub size_format: Option<helpers::bytes::Format>,
     pub max_depth: Option<usize>,
     pub format: Option<OutputFormat>,
-    pub no_color: Option<bool>,
+    pub no_color: bool,
 }
 
 impl ConfigBuilder {
@@ -98,21 +98,21 @@ impl ConfigBuilder {
     /// This effectively means `self` (e.g., CLI) overrides `other` (e.g., file).
     pub fn merge(mut self, other: ConfigBuilder) -> Self {
         self.root = self.root.or(other.root);
-        self.full_path = self.full_path.or(other.full_path);
+        self.full_path = self.full_path || other.full_path;
         self.prefix = self.prefix.or(other.prefix);
         self.last_prefix = self.last_prefix.or(other.last_prefix);
         self.child_prefix = self.child_prefix.or(other.child_prefix);
-        self.show_all = self.show_all.or(other.show_all);
+        self.show_all = self.show_all || other.show_all;
         self.include = self.include.or(other.include);
         self.exclude = self.exclude.or(other.exclude);
         self.ignore = self.ignore.or(other.ignore);
-        self.directory = self.directory.or(other.directory);
-        self.summary = self.summary.or(other.summary);
-        self.size = self.size.or(other.size);
+        self.directory = self.directory || other.directory;
+        self.summary = self.summary || other.summary;
+        self.size = self.size || other.size;
         self.size_format = self.size_format.or(other.size_format);
         self.max_depth = self.max_depth.or(other.max_depth);
         self.format = self.format.or(other.format);
-        self.no_color = self.no_color.or(other.no_color);
+        self.no_color = self.no_color || other.no_color;
         self
     }
 
@@ -121,21 +121,21 @@ impl ConfigBuilder {
         let default_config = Config::default();
         Config {
             root: self.root.unwrap_or(default_config.root),
-            full_path: self.full_path.unwrap_or(default_config.full_path),
+            full_path: self.full_path || default_config.full_path,
             prefix: self.prefix.unwrap_or(default_config.prefix),
             last_prefix: self.last_prefix.unwrap_or(default_config.last_prefix),
             child_prefix: self.child_prefix.unwrap_or(default_config.child_prefix),
-            show_all: self.show_all.unwrap_or(default_config.show_all),
+            show_all: self.show_all || default_config.show_all,
             include: self.include.or(default_config.include),
             exclude: self.exclude.or(default_config.exclude),
             ignore: self.ignore.unwrap_or(default_config.ignore),
-            directory: self.directory.unwrap_or(default_config.directory),
-            summary: self.summary.unwrap_or(default_config.summary),
-            size: self.size.unwrap_or(default_config.size),
+            directory: self.directory || default_config.directory,
+            summary: self.summary || default_config.summary,
+            size: self.size || default_config.size,
             size_format: self.size_format.unwrap_or(default_config.size_format),
             max_depth: self.max_depth.or(default_config.max_depth),
             format: self.format.unwrap_or(default_config.format),
-            no_color: self.no_color.unwrap_or(default_config.no_color),
+            no_color: self.no_color || default_config.no_color,
         }
     }
 }
@@ -171,21 +171,21 @@ impl From<cli::Args> for ConfigBuilder {
 #[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct FileConfig {
-    pub full_path: Option<bool>,
+    pub full_path: bool,
     pub prefix: Option<String>,
     pub last_prefix: Option<String>,
     pub child_prefix: Option<String>,
-    pub show_all: Option<bool>,
+    pub show_all: bool,
     pub include: Option<String>,
     pub exclude: Option<String>,
     pub ignore: Option<Vec<String>>,
-    pub directory: Option<bool>,
-    pub summary: Option<bool>,
-    pub size: Option<bool>,
+    pub directory: bool,
+    pub summary: bool,
+    pub size: bool,
     pub size_format: Option<helpers::bytes::Format>,
     pub max_depth: Option<usize>,
     pub format: Option<OutputFormat>,
-    pub no_color: Option<bool>,
+    pub no_color: bool,
 }
 
 /// Converts FileConfig into a ConfigBuilder
