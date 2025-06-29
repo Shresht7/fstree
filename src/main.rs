@@ -27,22 +27,22 @@ fn main() {
 }
 
 /// Implementation of the main run logic of the command-line
-fn run(args: &config::Config) -> Result<(), Box<dyn std::error::Error>> {
+fn run(cfg: &config::Config) -> Result<(), Box<dyn std::error::Error>> {
     // Check if the path actually exists
-    if !std::fs::metadata(&args.root).is_ok() {
+    if !std::fs::metadata(&cfg.root).is_ok() {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            format!("path does not exist: {}", &args.root.display().to_string()),
+            format!("path does not exist: {}", &cfg.root.display().to_string()),
         )));
     }
 
     // Build the tree
-    let mut builder = tree::TreeBuilder::new(args)?;
-    let tree = builder.build(&args.root)?;
+    let mut builder = tree::TreeBuilder::new(cfg)?;
+    let tree = builder.build(&cfg.root)?;
 
     // Format and print the tree
-    let formatter = formatter::get_formatter(&args.format);
-    let output = formatter.format(&tree, args, builder.get_stats())?;
+    let formatter = formatter::get_formatter(&cfg.format);
+    let output = formatter.format(&tree, cfg, builder.get_stats())?;
     println!("{}", output);
 
     Ok(())

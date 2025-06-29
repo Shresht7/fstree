@@ -15,16 +15,16 @@ pub struct FileFilter {
 }
 
 impl FileFilter {
-    pub fn new(args: &Config) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(cfg: &Config) -> Result<Self, Box<dyn std::error::Error>> {
         // Compile pattern matchers
-        let include_pattern = args
+        let include_pattern = cfg
             .include
             .as_ref()
             .map(|pat| Glob::new(pat))
             .transpose()?
             .map(|g| g.compile_matcher());
 
-        let exclude_pattern = args
+        let exclude_pattern = cfg
             .exclude
             .as_ref()
             .map(|pat| Glob::new(pat))
@@ -32,12 +32,12 @@ impl FileFilter {
             .map(|g| g.compile_matcher());
 
         Ok(Self {
-            root: args.root.clone(),
-            only_directories: args.directory,
-            show_all: args.show_all,
+            root: cfg.root.clone(),
+            only_directories: cfg.directory,
+            show_all: cfg.show_all,
             include_pattern,
             exclude_pattern,
-            ignorer: Self::setup_gitignore(&args.root, &args.ignore)?,
+            ignorer: Self::setup_gitignore(&cfg.root, &cfg.ignore)?,
         })
     }
 
