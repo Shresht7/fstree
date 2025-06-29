@@ -66,7 +66,7 @@ impl Default for Config {
             size_format: helpers::bytes::Format::Bytes,
             max_depth: None,
             format: OutputFormat::Text,
-            no_color: false,
+            no_color: std::env::var("NO_COLOR").is_ok(),
         }
     }
 }
