@@ -1,7 +1,8 @@
-//! Handles loading configuration from a file.
+//! Configuration management for `fstree`.
 //!
-//! This module defines the structure for the configuration file and provides
-//! a function to load it from a standard location (`~/.config/fstree/config.json`).
+//! This module handles loading, merging, and providing access to the application's
+//! configuration, which can be sourced from a configuration file (e.g., `~/.config/fstree/config.json`)
+//! and command-line arguments.
 
 use serde::Deserialize;
 use std::fs;
@@ -68,6 +69,7 @@ pub fn merge(file: FileConfig, cli: cli::Args) -> Config {
     }
 }
 
+/// Merges three optional values, prioritizing CLI, then file, then a default value.
 fn merge_options<T: Clone>(cli: Option<T>, file: Option<T>, default: T) -> T {
     cli.or(file).unwrap_or(default)
 }
@@ -106,8 +108,7 @@ pub struct FileConfig {
 ///
 /// The path is standardized to `~/.config/fstree/config.json` for all platforms.
 fn get_config_path() -> Option<PathBuf> {
-    // Using `home::home_dir()` would be simpler but adds a dependency.
-    // This manual implementation is a good compromise.
+    
     let home_dir = if cfg!(windows) {
         std::env::var("USERPROFILE").ok()
     } else {
