@@ -15,7 +15,7 @@ pub struct Args {
 
     /// Show full path for each file entry
     #[clap(short, long)]
-    pub full_path: bool,
+    pub full_path: Option<bool>,
 
     /// The prefix string to use for each level of the tree
     #[clap(short, long)]
@@ -30,7 +30,7 @@ pub struct Args {
 
     /// Show all files and directories, including hidden files
     #[clap(short = 'a', long, alias = "all")]
-    pub show_all: bool,
+    pub show_all: Option<bool>,
 
     /// Show only files that match the pattern (glob syntax)
     #[clap(short, long, alias = "pattern")]
@@ -46,15 +46,15 @@ pub struct Args {
 
     /// Show only directories
     #[clap(long, aliases = ["dir", "folder"])]
-    pub directory: bool,
+    pub directory: Option<bool>,
 
     /// Show directory and file count summary
     #[clap(short = 'r', long, alias = "report")]
-    pub summary: bool,
+    pub summary: Option<bool>,
 
     /// Show the filesize next to the name
     #[clap(short, long, alias = "filesize")]
-    pub size: bool,
+    pub size: Option<bool>,
 
     /// The format to use for the filesize. e.g. Bytes (B), KiloBytes (KB), MegaBytes (MB), GigaBytes (GB) etc.
     #[clap(long)]
@@ -70,7 +70,7 @@ pub struct Args {
 
     /// Disable ANSI colors
     #[clap(long, alias = "plain")]
-    pub no_color: bool,
+    pub no_color: Option<bool>,
 }
 
 /// Parses command line arguments into the Args struct
