@@ -159,10 +159,14 @@ impl Formatter for JsonFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &Args,
+        _args: &Args,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
-        serde_json::to_string_pretty(node).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        let output = serde_json::json!({
+            "root": node,
+            "stats": stats,
+        });
+        serde_json::to_string_pretty(&output).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
     }
 }
 

@@ -1,5 +1,7 @@
+use serde::Serialize;
+
 /// Statistics collected during tree traversal
-#[derive(Default)]
+#[derive(Default, Serialize)]
 pub struct Statistics {
     /// The total count of directories
     dirs: usize,
