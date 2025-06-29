@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::cli::Args;
+use crate::AppConfig;
 use crate::helpers;
 use crate::helpers::ansi::{ANSI, ANSIString};
 use crate::tree::{NodeType, TreeNode};
@@ -11,7 +11,7 @@ pub trait Formatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &Args,
+        args: &AppConfig,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String>;
 }
@@ -25,7 +25,7 @@ impl TextFormatter {
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
     /// `is_last`: True if the node is the last child of its parent, influencing branch characters
     /// `args`: The command line arguments that control formatting options
-    fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, args: &Args) -> String {
+    fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, args: &AppConfig) -> String {
         let mut output = String::new();
 
         // Determine the correct branch character (├── or └──)
@@ -56,9 +56,9 @@ impl TextFormatter {
 
         // Determine the prefix for children based on whether the current node is the last
         let child_prefix = if is_last {
-            format!("{}    ", prefix) // No vertical line for the last child's children
+            format!("{}    ", prefix)
         } else {
-            format!("{}│   ", prefix) // Vertical line for non-last children
+            format!("{}{}", prefix, &args.child_prefix)
         };
 
         // Recursively format children
@@ -111,7 +111,7 @@ impl Formatter for TextFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &Args,
+        args: &AppConfig,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
         let mut output = String::new();
@@ -159,7 +159,7 @@ impl Formatter for JsonFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        _args: &Args,
+        _args: &AppConfig,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
         let output = serde_json::json!({
@@ -179,7 +179,7 @@ pub fn get_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
 }
 
 /// Defines the supported output formats for the tree
-#[derive(Clone)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub enum OutputFormat {
     Text,
     Json,

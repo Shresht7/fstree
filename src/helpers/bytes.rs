@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Format {
     Bytes,
     KiloBytes,
@@ -66,5 +66,15 @@ impl std::str::FromStr for Format {
             "exa" | "exabytes" | "eb" | "e" => Ok(Self::ExaBytes),
             e => Err(format!("Unknown size format: {}", e)),
         }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Format {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse::<Format>().map_err(serde::de::Error::custom)
     }
 }

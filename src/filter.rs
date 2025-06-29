@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use globset::{Glob, GlobMatcher};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-use crate::cli::Args;
+use crate::AppConfig;
 
 pub struct FileFilter {
     root: PathBuf,
@@ -15,7 +15,7 @@ pub struct FileFilter {
 }
 
 impl FileFilter {
-    pub fn new(args: &Args) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(args: &AppConfig) -> Result<Self, Box<dyn std::error::Error>> {
         // Compile pattern matchers
         let include_pattern = args
             .include
