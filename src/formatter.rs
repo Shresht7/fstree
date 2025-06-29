@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::AppConfig;
+use crate::config::AppConfig;
 use crate::helpers;
 use crate::helpers::ansi::{ANSI, ANSIString};
 use crate::tree::{NodeType, TreeNode};
@@ -25,7 +25,13 @@ impl TextFormatter {
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
     /// `is_last`: True if the node is the last child of its parent, influencing branch characters
     /// `args`: The command line arguments that control formatting options
-    fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, args: &AppConfig) -> String {
+    fn format_node(
+        &self,
+        node: &TreeNode,
+        prefix: &str,
+        is_last: bool,
+        args: &AppConfig,
+    ) -> String {
         let mut output = String::new();
 
         // Determine the correct branch character (├── or └──)

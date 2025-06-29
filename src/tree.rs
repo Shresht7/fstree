@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-use crate::AppConfig;
+use crate::config::AppConfig;
 use crate::filter::FileFilter;
 use crate::stats::Statistics;
 

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use globset::{Glob, GlobMatcher};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-use crate::AppConfig;
+use crate::config::AppConfig;
 
 pub struct FileFilter {
     root: PathBuf,
