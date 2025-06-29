@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-use crate::config::AppConfig;
+use crate::config::Config;
 use crate::filter::FileFilter;
 use crate::stats::Statistics;
 
@@ -31,7 +31,7 @@ pub struct TreeNode {
 /// The builder responsible for constructing a file system tree based on the provided command line arguments
 pub struct TreeBuilder<'a> {
     /// The command line arguments used to configure the tree building process
-    pub args: &'a AppConfig,
+    pub args: &'a Config,
     /// The root path from which the tree is built
     root: std::path::PathBuf,
     /// The file filter used to determine which files and directories to include in the tree
@@ -44,7 +44,7 @@ pub struct TreeBuilder<'a> {
 
 impl<'a> TreeBuilder<'a> {
     /// Creates a new `TreeBuilder` with the provided command line arguments.
-    pub fn new(args: &'a AppConfig) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(args: &'a Config) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             root: args.root.clone(),
             args,

@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::config::AppConfig;
+use crate::config::Config;
 use crate::helpers;
 use crate::helpers::ansi::{ANSI, ANSIString};
 use crate::tree::{NodeType, TreeNode};
@@ -11,7 +11,7 @@ pub trait Formatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &AppConfig,
+        args: &Config,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String>;
 }
@@ -25,13 +25,7 @@ impl TextFormatter {
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
     /// `is_last`: True if the node is the last child of its parent, influencing branch characters
     /// `args`: The command line arguments that control formatting options
-    fn format_node(
-        &self,
-        node: &TreeNode,
-        prefix: &str,
-        is_last: bool,
-        args: &AppConfig,
-    ) -> String {
+    fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, args: &Config) -> String {
         let mut output = String::new();
 
         // Determine the correct branch character (├── or └──)
@@ -117,7 +111,7 @@ impl Formatter for TextFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        args: &AppConfig,
+        args: &Config,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
         let mut output = String::new();
@@ -165,7 +159,7 @@ impl Formatter for JsonFormatter {
     fn format(
         &self,
         node: &TreeNode,
-        _args: &AppConfig,
+        _args: &Config,
         stats: &crate::stats::Statistics,
     ) -> io::Result<String> {
         let output = serde_json::json!({

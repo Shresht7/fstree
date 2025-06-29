@@ -27,7 +27,7 @@ fn main() {
 }
 
 /// Implementation of the main run logic of the command-line
-fn run(args: &config::AppConfig) -> Result<(), Box<dyn std::error::Error>> {
+fn run(args: &config::Config) -> Result<(), Box<dyn std::error::Error>> {
     // Check if the path actually exists
     if !std::fs::metadata(&args.root).is_ok() {
         return Err(Box::new(std::io::Error::new(

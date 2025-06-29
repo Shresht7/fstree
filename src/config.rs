@@ -12,7 +12,7 @@ use crate::formatter::OutputFormat;
 use crate::helpers;
 
 /// Represents the final, merged configuration from all sources.
-pub struct AppConfig {
+pub struct Config {
     pub root: PathBuf,
     pub full_path: bool,
     pub prefix: String,
@@ -34,8 +34,8 @@ pub struct AppConfig {
 /// Merges settings from the config file and CLI arguments.
 ///
 /// CLI arguments take precedence over the config file, which takes precedence over defaults.
-pub fn merge_configs(file: FileConfig, cli: cli::Args) -> AppConfig {
-    AppConfig {
+pub fn merge_configs(file: FileConfig, cli: cli::Args) -> Config {
+    Config {
         // CLI > File > Default
         root: cli.root.unwrap_or_else(|| PathBuf::from(".")),
 
