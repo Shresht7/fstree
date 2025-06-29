@@ -1,11 +1,14 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
+use serde::Serialize;
+
 use crate::cli::Args;
 use crate::filter::FileFilter;
 use crate::stats::Statistics;
 
 /// Represents the type of a file system node
+#[derive(Serialize)]
 pub enum NodeType {
     File,
     Directory,
@@ -16,6 +19,7 @@ pub enum NodeType {
 ///
 /// Each `TreeNode` contains information about a file or directory, including its name,
 /// path, type, size (if applicable), and its children nodes (if it is a directory).
+#[derive(Serialize)]
 pub struct TreeNode {
     pub name: String,
     pub path: std::path::PathBuf,
