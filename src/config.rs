@@ -40,40 +40,36 @@ pub fn merge_configs(file: FileConfig, cli: cli::Args) -> AppConfig {
         root: cli.root.unwrap_or_else(|| PathBuf::from(".")),
 
         // CLI flags are booleans, so they are always present
-        full_path: cli.full_path || file.full_path.unwrap_or(false),
-        show_all: cli.show_all || file.show_all.unwrap_or(false),
-        directory: cli.directory || file.directory.unwrap_or(false),
-        summary: cli.summary || file.summary.unwrap_or(false),
-        size: cli.size || file.size.unwrap_or(false),
-        no_color: cli.no_color || file.no_color.unwrap_or(false),
+        full_path: merge_options(cli.full_path, file.full_path, false),
+        show_all: merge_options(cli.show_all, file.show_all, false),
+        directory: merge_options(cli.directory, file.directory, false),
+        summary: merge_options(cli.summary, file.summary, false),
+        size: merge_options(cli.size, file.size, false),
+        no_color: merge_options(cli.no_color, file.no_color, false),
 
         // CLI > File > Default
-        prefix: cli
-            .prefix
-            .or(file.prefix)
-            .unwrap_or_else(|| "├── ".to_string()),
-        last_prefix: cli
-            .last_prefix
-            .or(file.last_prefix)
-            .unwrap_or_else(|| "└── ".to_string()),
-        child_prefix: cli
-            .child_prefix
-            .or(file.child_prefix)
-            .unwrap_or_else(|| "│   ".to_string()),
+        prefix: merge_options(cli.prefix, file.prefix, "├── ".to_string()),
+        last_prefix: merge_options(cli.last_prefix, file.last_prefix, "└── ".to_string()),
+        child_prefix: merge_options(cli.child_prefix, file.child_prefix, "│   ".to_string()),
 
         // These are optional and can remain None
-        include: cli.include.or(file.include),
-        exclude: cli.exclude.or(file.exclude),
-        max_depth: cli.max_depth.or(file.max_depth),
+        include: merge_options(Some(cli.include), Some(file.include), None),
+        exclude: merge_options(Some(cli.exclude), Some(file.exclude), None),
+        max_depth: merge_options(Some(cli.max_depth), Some(file.max_depth), None),
 
         // CLI > File > Default
-        ignore: cli.ignore.or(file.ignore).unwrap_or_default(),
-        size_format: cli
-            .size_format
-            .or(file.size_format)
-            .unwrap_or(helpers::bytes::Format::Bytes),
-        format: cli.format.or(file.format).unwrap_or(OutputFormat::Text),
+        ignore: merge_options(cli.ignore, file.ignore, Vec::new()),
+        size_format: merge_options(
+            cli.size_format,
+            file.size_format,
+            helpers::bytes::Format::Bytes,
+        ),
+        format: merge_options(cli.format, file.format, OutputFormat::Text),
     }
+}
+
+fn merge_options<T: Clone>(cli: Option<T>, file: Option<T>, default: T) -> T {
+    cli.or(file).unwrap_or(default)
 }
 
 /// Represents the structure of the configuration file.
