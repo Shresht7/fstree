@@ -153,11 +153,24 @@ impl Formatter for TextFormatter {
     }
 }
 
+pub struct JsonFormatter;
+
+impl Formatter for JsonFormatter {
+    fn format(
+        &self,
+        node: &TreeNode,
+        args: &Args,
+        stats: &crate::stats::Statistics,
+    ) -> io::Result<String> {
+        serde_json::to_string_pretty(node).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+    }
+}
+
 /// Returns the appropriate formatter based on the requested output format
 pub fn get_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
     match format {
         OutputFormat::Text => Box::new(TextFormatter),
-        // OutputFormat::Json => Box::new(JsonFormatter), // TODO: Implement JSON formatter
+        OutputFormat::Json => Box::new(JsonFormatter),
         // OutputFormat::Xml => Box::new(XmlFormatter),   // TODO: Implement XML formatter
     }
 }
@@ -166,7 +179,7 @@ pub fn get_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
 #[derive(Clone)]
 pub enum OutputFormat {
     Text,
-    // Json, // TODO: JSON output
+    Json,
     // Xml,  // TODO: XML output
 }
 
@@ -175,7 +188,7 @@ impl std::str::FromStr for OutputFormat {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "text" => Ok(Self::Text),
-            // "json" => Ok(Self::Json),
+            "json" => Ok(Self::Json),
             // "xml" => Ok(Self::Xml),
             e => Err(format!("Unknown output format: {}", e)),
         }
