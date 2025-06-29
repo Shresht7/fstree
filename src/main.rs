@@ -32,8 +32,8 @@ fn setup_configuration(args: cli::Args) -> config::Config {
         args.into()
     } else {
         // Load the configuration file and merge it with the command-line arguments
-        let file_config = config::load();
-        config::merge_configs(file_config, args)
+        let config_file = config::load_file();
+        config::merge(config_file, args)
     }
 }
 

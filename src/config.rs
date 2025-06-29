@@ -34,7 +34,7 @@ pub struct Config {
 /// Merges settings from the config file and CLI arguments.
 ///
 /// CLI arguments take precedence over the config file, which takes precedence over defaults.
-pub fn merge_configs(file: FileConfig, cli: cli::Args) -> Config {
+pub fn merge(file: FileConfig, cli: cli::Args) -> Config {
     Config {
         // CLI > File > Default
         root: cli.root.unwrap_or_else(|| PathBuf::from(".")),
@@ -74,7 +74,7 @@ fn merge_options<T: Clone>(cli: Option<T>, file: Option<T>, default: T) -> T {
 
 impl From<cli::Args> for Config {
     fn from(value: cli::Args) -> Self {
-        return merge_configs(FileConfig::default(), value);
+        return merge(FileConfig::default(), value);
     }
 }
 
@@ -126,7 +126,7 @@ fn get_config_path() -> Option<PathBuf> {
 ///
 /// Reads and parses the JSON configuration file. If the file doesn't exist,
 /// is inaccessible, or contains invalid JSON, it returns a default, empty configuration.
-pub fn load() -> FileConfig {
+pub fn load_file() -> FileConfig {
     if let Some(path) = get_config_path() {
         if let Ok(content) = fs::read_to_string(&path) {
             // Ignore empty or whitespace-only config files
