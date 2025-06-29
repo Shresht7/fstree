@@ -10,7 +10,10 @@ use std::path::{Path, PathBuf};
 
 use crate::cli;
 use crate::formatter::OutputFormat;
-use crate::helpers;
+use crate::helpers::{
+    self,
+    ansi::{ANSI, ANSIString},
+};
 
 /// Represents the final, merged configuration from all sources
 pub struct Config {
@@ -247,7 +250,9 @@ pub fn load_file() -> FileConfig {
                 Ok(config) => return config,
                 Err(e) => {
                     eprintln!(
-                        "Warning: Failed to parse config file at '{}': {}",
+                        "{} {} {}: {}",
+                        " Warning ".ansi(&[ANSI::BgYellow]),
+                        "Failed to parse config file at",
                         path.display(),
                         e
                     );
