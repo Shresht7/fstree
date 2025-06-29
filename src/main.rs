@@ -13,16 +13,27 @@ mod tree;
 
 /// The main entrypoint of the application
 fn main() {
-    // Load configuration from file and command-line arguments
-    let file_config = config::load();
-    let cli_args = cli::parse();
+    // Parse the command-line arguments
+    let args = cli::parse();
 
-    // Merge configurations
-    let app_config = config::merge_configs(file_config, cli_args);
+    // Merge configurations from command-line arguments and configuration file
+    let cfg = setup_configuration(args);
 
-    if let Err(e) = run(&app_config) {
+    if let Err(e) = run(&cfg) {
         eprintln!("Error: {e}");
         std::process::exit(1);
+    }
+}
+
+/// Sets up the configuration for the application
+fn setup_configuration(args: cli::Args) -> config::Config {
+    if args.no_config {
+        // If `no_config` is set, use only the command-line arguments
+        args.into()
+    } else {
+        // Load the configuration file and merge it with the command-line arguments
+        let file_config = config::load();
+        config::merge_configs(file_config, args)
     }
 }
 

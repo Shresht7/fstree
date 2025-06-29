@@ -71,6 +71,10 @@ pub struct Args {
     /// Disable ANSI colors
     #[clap(long, alias = "plain")]
     pub no_color: Option<bool>,
+
+    /// Disables loading the configuration file
+    #[clap(long, alias = "nocfg")]
+    pub no_config: bool,
 }
 
 /// Parses command line arguments into the Args struct

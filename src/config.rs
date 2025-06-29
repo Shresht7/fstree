@@ -72,6 +72,12 @@ fn merge_options<T: Clone>(cli: Option<T>, file: Option<T>, default: T) -> T {
     cli.or(file).unwrap_or(default)
 }
 
+impl From<cli::Args> for Config {
+    fn from(value: cli::Args) -> Self {
+        return merge_configs(FileConfig::default(), value);
+    }
+}
+
 /// Represents the structure of the configuration file.
 ///
 /// Fields are optional, allowing users to only specify the settings
