@@ -1,8 +1,7 @@
-//! Manages the configuration
+//! This module manages the application's configuration.
 //!
-//! This module handles loading, merging, and providing access to the application's
-//! configuration, which can be sourced from a configuration file (e.g., `~/.config/fstree/config.json`)
-//! and command-line arguments
+//! It handles loading, merging, and providing access to configuration settings
+//! from various sources, including a configuration file and command-line arguments.
 
 use serde::Deserialize;
 use std::fs;
@@ -52,8 +51,9 @@ pub struct Config {
 }
 
 impl Default for Config {
+    /// Provides a default configuration, which is used as a base.
     fn default() -> Self {
-        Config {
+        Self {
             root: PathBuf::from("."),
             full_path: false,
             prefix: "├── ".to_string(),
@@ -74,8 +74,11 @@ impl Default for Config {
     }
 }
 
-/// Represents an intermediate configuration builder, where all fields are optional.
-/// This is used to merge configurations from different sources (CLI, file).
+/// A builder for constructing a `Config` instance.
+///
+/// This builder allows for layered configuration, where settings from different
+/// sources can be merged. Command-line arguments take precedence over file-based
+/// settings.
 #[derive(Default, Debug)]
 pub struct ConfigBuilder {
     pub root: Option<PathBuf>,
@@ -121,24 +124,24 @@ impl ConfigBuilder {
 
     /// Builds the final Config struct from the ConfigBuilder, applying default values.
     pub fn build(self) -> Config {
-        let default_config = Config::default();
+        let defaults = Config::default();
         Config {
-            root: self.root.unwrap_or(default_config.root),
-            full_path: self.full_path || default_config.full_path,
-            prefix: self.prefix.unwrap_or(default_config.prefix),
-            last_prefix: self.last_prefix.unwrap_or(default_config.last_prefix),
-            child_prefix: self.child_prefix.unwrap_or(default_config.child_prefix),
-            show_all: self.show_all || default_config.show_all,
-            include: self.include.or(default_config.include),
-            exclude: self.exclude.or(default_config.exclude),
-            ignore: self.ignore.unwrap_or(default_config.ignore),
-            directory: self.directory || default_config.directory,
-            summary: self.summary || default_config.summary,
-            size: self.size || default_config.size,
-            size_format: self.size_format.unwrap_or(default_config.size_format),
-            max_depth: self.max_depth.or(default_config.max_depth),
-            format: self.format.unwrap_or(default_config.format),
-            no_color: self.no_color || default_config.no_color,
+            root: self.root.unwrap_or(defaults.root),
+            full_path: self.full_path,
+            prefix: self.prefix.unwrap_or(defaults.prefix),
+            last_prefix: self.last_prefix.unwrap_or(defaults.last_prefix),
+            child_prefix: self.child_prefix.unwrap_or(defaults.child_prefix),
+            show_all: self.show_all,
+            include: self.include,
+            exclude: self.exclude,
+            ignore: self.ignore.unwrap_or(defaults.ignore),
+            directory: self.directory,
+            summary: self.summary,
+            size: self.size,
+            size_format: self.size_format.unwrap_or(defaults.size_format),
+            max_depth: self.max_depth,
+            format: self.format.unwrap_or(defaults.format),
+            no_color: self.no_color,
         }
     }
 }
@@ -146,7 +149,7 @@ impl ConfigBuilder {
 /// Converts CLI arguments into a ConfigBuilder
 impl From<cli::Args> for ConfigBuilder {
     fn from(args: cli::Args) -> Self {
-        ConfigBuilder {
+        Self {
             root: args.root,
             full_path: args.full_path,
             prefix: args.prefix,
@@ -191,10 +194,11 @@ pub struct FileConfig {
     pub no_color: Option<bool>,
 }
 
-/// Converts FileConfig into a ConfigBuilder
+/// Converts a `FileConfig` into a `ConfigBuilder`.
 impl From<FileConfig> for ConfigBuilder {
     fn from(file_config: FileConfig) -> Self {
-        ConfigBuilder {
+        Self {
+            root: None, // Root is not supported in file configuration.
             full_path: file_config.full_path.unwrap_or_default(),
             prefix: file_config.prefix,
             last_prefix: file_config.last_prefix,
@@ -210,28 +214,26 @@ impl From<FileConfig> for ConfigBuilder {
             max_depth: file_config.max_depth,
             format: file_config.format,
             no_color: file_config.no_color.unwrap_or_default(),
-            // Root is not part of FileConfig, so it remains None
-            root: None,
         }
     }
 }
 
-/// Returns the path to the configuration file
+/// Returns the path to the configuration file.
 ///
-/// The path is standardized to `~/.config/fstree/config.json` for all platforms
+/// The path is standardized to `~/.config/fstree/config.json`.
 fn get_config_path() -> Option<PathBuf> {
     let home_dir = if cfg!(windows) {
         std::env::var("USERPROFILE").ok()
     } else {
         std::env::var("HOME").ok()
-    };
+    }?; // Use `?` to exit early if home dir is not found.
 
-    home_dir.map(|dir| {
-        Path::new(&dir)
+    Some(
+        Path::new(&home_dir)
             .join(".config")
             .join("fstree")
-            .join("config.json")
-    })
+            .join("config.json"),
+    )
 }
 
 /// Loads the configuration from the file system
