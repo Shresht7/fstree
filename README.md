@@ -3,8 +3,8 @@
 A command-line utility that displays directory structure in a tree-like format.
 
 <div align="center">
-  <img src="docs/screenshot.png" alt="screenshot" width="49%"/>
-  <img src="docs/screenshot-config.png" alt="screenshot-with-config" width="49%"/>
+  <img src="docs/screenshot.png" alt="screenshot" height="150px"/>
+  <img src="docs/screenshot-config.png" alt="screenshot-with-config" height="150px"/>
 </div>
 
 ## 🌟 Features
