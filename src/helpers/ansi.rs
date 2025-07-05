@@ -1,9 +1,12 @@
-// ----------
-// ANSI CODES
-// ----------
+//! This module provides utilities for working with ANSI escape codes.
+//!
+//! It includes an `ANSI` enum representing various text styles and colors,
+//! and an `ANSIString` trait for applying these styles to strings.
 
-/// ANSI escape codes
-#[derive(Clone, Copy)]
+/// Represents an ANSI escape code for text formatting.
+///
+/// Each variant corresponds to a specific SGR (Select Graphic Rendition) code.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 #[allow(dead_code)]
 pub enum ANSI {
@@ -11,66 +14,66 @@ pub enum ANSI {
     Reset = 0,
 
     // Styles
-    Bold,
-    Faint,
-    Italic,
-    Underline,
-    BlinkSlow,
-    BlinkRapid,
-    Reverse,
-    Conceal,
+    Bold = 1,
+    Faint = 2,
+    Italic = 3,
+    Underline = 4,
+    BlinkSlow = 5,
+    BlinkRapid = 6,
+    Reverse = 7,
+    Conceal = 8,
     CrossedOut = 9,
+
+    // Style Resets
     NormalIntensity = 22,
-    NotItalic,
-    NotUnderline,
-    NotBlink,
-    NotReverse,
-    NotConceal,
+    NotItalic = 23,
+    NotUnderline = 24,
+    NotBlink = 25,
+    NotReverse = 27,
+    NotConceal = 28,
     NotCrossedOut = 29,
 
-    // Foreground colors
+    // Foreground Colors
     Black = 30,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
+    Red = 31,
+    Green = 32,
+    Yellow = 33,
+    Blue = 34,
+    Magenta = 35,
+    Cyan = 36,
     White = 37,
     Default = 39,
 
-    // Background colors
+    // Background Colors
     BgBlack = 40,
-    BgRed,
-    BgGreen,
-    BgYellow,
-    BgBlue,
-    BgMagenta,
-    BgCyan,
-    BgWhite,
+    BgRed = 41,
+    BgGreen = 42,
+    BgYellow = 43,
+    BgBlue = 44,
+    BgMagenta = 45,
+    BgCyan = 46,
+    BgWhite = 47,
     BgDefault = 49,
 
-    // Bright foreground colors
+    // Bright Foreground Colors
     BrightBlack = 90,
-    BrightRed,
-    BrightGreen,
-    BrightYellow,
-    BrightBlue,
-    BrightMagenta,
-    BrightCyan,
-    BrightWhite,
-    BrightDefault = 99,
+    BrightRed = 91,
+    BrightGreen = 92,
+    BrightYellow = 93,
+    BrightBlue = 94,
+    BrightMagenta = 95,
+    BrightCyan = 96,
+    BrightWhite = 97,
 
-    // Bright background colors
+    // Bright Background Colors
     BgBrightBlack = 100,
-    BgBrightRed,
-    BgBrightGreen,
-    BgBrightYellow,
-    BgBrightBlue,
-    BgBrightMagenta,
-    BgBrightCyan,
-    BgBrightWhite,
-    BgBrightDefault = 109,
+    BgBrightRed = 101,
+    BgBrightGreen = 102,
+    BgBrightYellow = 103,
+    BgBrightBlue = 104,
+    BgBrightMagenta = 105,
+    BgBrightCyan = 106,
+    BgBrightWhite = 107,
 }
 
 impl std::fmt::Display for ANSI {
@@ -79,11 +82,17 @@ impl std::fmt::Display for ANSI {
     }
 }
 
+/// A trait for applying ANSI styling to a string.
 pub trait ANSIString {
+    /// Wraps the string with the given ANSI codes.
+    ///
+    /// This method takes a slice of `ANSI` codes, joins them with semicolons,
+    /// and formats the string to be displayed with the specified styles.
     fn ansi(&self, codes: &[ANSI]) -> String;
 }
 
 impl<T: AsRef<str>> ANSIString for T {
+    /// Applies ANSI styling to the string.
     fn ansi(&self, codes: &[ANSI]) -> String {
         let codes_str = codes
             .iter()
