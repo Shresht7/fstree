@@ -71,7 +71,7 @@ impl FileFilter {
         }
 
         // Build the gitignore handler
-        Ok(builder.build()?)
+        builder.build()
     }
 
     /// Checks if a given directory entry should be included in the output.

@@ -67,7 +67,7 @@ impl std::str::FromStr for Format {
             "tera" | "terabytes" | "tb" | "t" => Ok(Self::TeraBytes),
             "peta" | "petabytes" | "pb" | "p" => Ok(Self::PetaBytes),
             "exa" | "exabytes" | "eb" | "e" => Ok(Self::ExaBytes),
-            e => Err(format!("Unknown size format: {}", e)),
+            e => Err(format!("Unknown size format: {e}")),
         }
     }
 }

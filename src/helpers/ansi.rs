@@ -9,7 +9,7 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 #[allow(dead_code)]
-pub enum ANSI {
+pub enum Ansi {
     // Reset all attributes
     Reset = 0,
 
@@ -76,24 +76,24 @@ pub enum ANSI {
     BgBrightWhite = 107,
 }
 
-impl std::fmt::Display for ANSI {
+impl std::fmt::Display for Ansi {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", *self as u8)
     }
 }
 
 /// A trait for applying ANSI styling to a string.
-pub trait ANSIString {
+pub trait AnsiString {
     /// Wraps the string with the given ANSI codes.
     ///
     /// This method takes a slice of `ANSI` codes, joins them with semicolons,
     /// and formats the string to be displayed with the specified styles.
-    fn ansi(&self, codes: &[ANSI]) -> String;
+    fn ansi(&self, codes: &[Ansi]) -> String;
 }
 
-impl<T: AsRef<str>> ANSIString for T {
+impl<T: AsRef<str>> AnsiString for T {
     /// Applies ANSI styling to the string.
-    fn ansi(&self, codes: &[ANSI]) -> String {
+    fn ansi(&self, codes: &[Ansi]) -> String {
         let codes_str = codes
             .iter()
             .map(|c| c.to_string())

@@ -2,7 +2,7 @@ use std::io;
 
 use crate::config::Config;
 use crate::helpers;
-use crate::helpers::ansi::{ANSI, ANSIString};
+use crate::helpers::ansi::{Ansi, AnsiString};
 use crate::tree::{NodeType, TreeNode};
 
 /// Defines the interface for different output formatters
@@ -39,7 +39,7 @@ impl TextFormatter {
         let display_name = self.format_display_name(node, cfg, !cfg.no_color);
 
         // Construct the current line with prefix, branch, and name
-        let mut line = format!("{}{}{}", prefix, branch, display_name);
+        let mut line = format!("{prefix}{branch}{display_name}");
 
         // Add file size if requested
         if cfg.size {
@@ -56,7 +56,7 @@ impl TextFormatter {
 
         // Determine the prefix for children based on whether the current node is the last
         let child_prefix = if is_last {
-            format!("{}    ", prefix)
+            format!("{prefix}    ")
         } else {
             format!("{}{}", prefix, &cfg.child_prefix)
         };
@@ -85,16 +85,16 @@ impl TextFormatter {
         match node.node_type {
             NodeType::File => {
                 if ansi {
-                    name.ansi(&[ANSI::BrightWhite])
+                    name.ansi(&[Ansi::BrightWhite])
                 } else {
                     name
                 }
             }
             NodeType::Directory => {
                 if ansi {
-                    format!(" {} ", name).ansi(&[ANSI::Bold, ANSI::BgYellow])
+                    format!(" {name} ").ansi(&[Ansi::Bold, Ansi::BgYellow])
                 } else {
-                    format!("{}/", name)
+                    format!("{name}/")
                 }
             }
             NodeType::SymbolicLink => {
@@ -102,9 +102,9 @@ impl TextFormatter {
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|_| "<unreadable>".to_string());
                 if ansi {
-                    format!("{} -> {}", name, target).ansi(&[ANSI::BrightCyan])
+                    format!("{name} -> {target}").ansi(&[Ansi::BrightCyan])
                 } else {
-                    format!("{} -> {}", name, target)
+                    format!("{name} -> {target}")
                 }
             }
         }
@@ -171,7 +171,7 @@ impl Formatter for JsonFormatter {
             "root": node,
             "stats": stats,
         });
-        serde_json::to_string_pretty(&output).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        serde_json::to_string_pretty(&output).map_err(io::Error::other)
     }
 }
 
@@ -196,7 +196,7 @@ impl std::str::FromStr for OutputFormat {
         match s.to_lowercase().as_str() {
             "text" => Ok(Self::Text),
             "json" => Ok(Self::Json),
-            e => Err(format!("Unknown output format: {}", e)),
+            e => Err(format!("Unknown output format: {e}")),
         }
     }
 }

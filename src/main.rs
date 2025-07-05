@@ -62,7 +62,7 @@ fn run(cfg: &config::Config) -> Result<(), Box<dyn std::error::Error>> {
     // Format and print the tree to the standard output
     let formatter = formatter::get_formatter(&cfg.format);
     let output = formatter.format(&tree, cfg, builder.get_stats())?;
-    println!("{}", output);
+    println!("{output}");
 
     Ok(())
 }

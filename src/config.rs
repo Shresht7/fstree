@@ -11,7 +11,7 @@ use crate::cli;
 use crate::formatter::OutputFormat;
 use crate::helpers::{
     self,
-    ansi::{ANSI, ANSIString},
+    ansi::{Ansi, AnsiString},
 };
 
 /// Represents the final, merged configuration from all sources
@@ -252,9 +252,8 @@ pub fn load_file() -> FileConfig {
                 Ok(config) => return config,
                 Err(e) => {
                     eprintln!(
-                        "{} {} {}: {}",
-                        " Warning ".ansi(&[ANSI::BgYellow]),
-                        "Failed to parse config file at",
+                        "{} Failed to parse config file at {}: {}",
+                        " Warning ".ansi(&[Ansi::BgYellow]),
                         path.display(),
                         e
                     );
