@@ -18,8 +18,11 @@ fn main() {
     // Parse the command-line arguments
     let args = cli::parse();
 
+    // Load the configuration file
+    let config_file = config::load_file();
+
     // Merge configurations from command-line arguments and configuration file
-    let cfg = setup_configuration(args);
+    let cfg = setup_configuration(args, config_file);
 
     if let Err(e) = run(&cfg) {
         eprintln!("Error: {e}");
@@ -28,13 +31,12 @@ fn main() {
 }
 
 /// Sets up the configuration for the application
-fn setup_configuration(args: cli::Args) -> config::Config {
+fn setup_configuration(args: cli::Args, config_file: config::FileConfig) -> config::Config {
     if args.no_config {
         // If `no_config` is set, use only the command-line arguments
         ConfigBuilder::from(args).build()
     } else {
-        // Load the configuration file and merge it with the command-line arguments
-        let config_file = config::load_file();
+        // Otherwise, merge the configurations together
         ConfigBuilder::from(args).merge(config_file.into()).build()
     }
 }
