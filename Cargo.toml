@@ -1,6 +1,6 @@
 [package]
 name = "fstree"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 authors = ["Shresht7"]
 description = "list contents of a directory in a tree format"
