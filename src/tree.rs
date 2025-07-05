@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
@@ -22,16 +22,19 @@ pub enum NodeType {
 #[derive(Serialize)]
 pub struct TreeNode {
     pub name: String,
-    pub path: std::path::PathBuf,
+    pub path: PathBuf,
     pub node_type: NodeType,
     pub size: Option<u64>,
     pub children: Vec<TreeNode>,
 }
 
-/// The builder responsible for constructing a file system tree based on the provided configuration
+/// A builder for constructing a file system tree
+///
+/// This builder walks a directory and constructs a `TreeNode` representation of the
+/// file system, based on the provided configuration.
 pub struct TreeBuilder<'a> {
     /// The configuration to use for the tree building process
-    pub cfg: &'a Config,
+    cfg: &'a Config,
     /// The root path from which the tree is built
     root: std::path::PathBuf,
     /// The file filter used to determine which files and directories to include in the tree
@@ -39,11 +42,11 @@ pub struct TreeBuilder<'a> {
     /// A set of visited paths to avoid processing the same path multiple times
     visited: HashSet<PathBuf>,
     /// The statistics collected during the tree building process
-    pub stats: Statistics,
+    stats: Statistics,
 }
 
 impl<'a> TreeBuilder<'a> {
-    /// Creates a new `TreeBuilder` with the provided configuration.
+    /// Creates a new `TreeBuilder` with the given configuration
     pub fn new(cfg: &'a Config) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             root: cfg.root.clone(),
@@ -54,9 +57,11 @@ impl<'a> TreeBuilder<'a> {
         })
     }
 
-    /// Builds a `TreeNode` representing the file system structure starting from the given path.
-    pub fn build<P: AsRef<std::path::Path>>(&mut self, path: P) -> std::io::Result<TreeNode> {
-        let path = path.as_ref();
+    /// Builds a `TreeNode` from the given path
+    ///
+    /// This method recursively walks the file system from the specified path and
+    /// constructs a tree of `TreeNode` objects.
+    pub fn build(&mut self, path: &Path) -> std::io::Result<TreeNode> {
         let metadata = std::fs::symlink_metadata(path)?;
 
         let file_type = metadata.file_type();
@@ -88,32 +93,7 @@ impl<'a> TreeBuilder<'a> {
         };
 
         match node.node_type {
-            NodeType::Directory => {
-                let canonical_path = path.canonicalize()?;
-                if self.visited.contains(&canonical_path) {
-                    return Ok(node);
-                }
-                self.visited.insert(canonical_path);
-
-                self.stats.add_dirs(1);
-                // Only traverse directory if within max_depth
-                if let Some(max_depth) = self.cfg.max_depth {
-                    let current_depth = path
-                        .strip_prefix(&self.root)
-                        .map(|p| {
-                            p.components()
-                                .filter(|c| matches!(c, std::path::Component::Normal(_)))
-                                .count()
-                        })
-                        .unwrap_or(0);
-                    if current_depth < max_depth {
-                        node.children = self.read_dir(path)?;
-                    }
-                } else {
-                    node.children = self.read_dir(path)?;
-                }
-            }
-
+            NodeType::Directory => self.process_directory(path, &mut node)?,
             NodeType::File | NodeType::SymbolicLink => {
                 self.stats.add_files(1);
                 if let Some(size) = size {
@@ -125,22 +105,51 @@ impl<'a> TreeBuilder<'a> {
         Ok(node)
     }
 
-    /// Reads the directory entries at the specified path and builds `TreeNode` children for each entry.
-    fn read_dir<P: AsRef<std::path::Path>>(&mut self, path: P) -> std::io::Result<Vec<TreeNode>> {
-        let entries = self.file_filter.filter_entries(path.as_ref())?;
-        let mut children = Vec::new();
-
-        for entry in entries {
-            if let Ok(child) = self.build(entry.path()) {
-                children.push(child);
-            }
-        }
-
-        Ok(children)
-    }
-
-    /// Returns the statistics collected during the tree building process.
+    /// Returns a reference to the statistics collected during the tree build
     pub fn get_stats(&self) -> &Statistics {
         &self.stats
+    }
+
+    /// Processes a directory, reading its entries and recursively building the tree
+    fn process_directory(&mut self, path: &Path, node: &mut TreeNode) -> std::io::Result<()> {
+        // Check to see if we have already visited this directory (e.g. cyclic symlink)
+        let canonical_path = path.canonicalize()?;
+        if self.visited.contains(&canonical_path) {
+            return Ok(()); // if we have, then skip processing it again
+        }
+        self.visited.insert(canonical_path); // Track that we've visited this path
+
+        self.stats.add_dirs(1);
+
+        // If we are still within the specified max-depth, keep recursing
+        if self.is_within_max_depth(path) {
+            node.children = self.read_dir(path)?;
+        }
+
+        Ok(())
+    }
+
+    /// Reads the entries of a directory and builds a vector of `TreeNode` children
+    fn read_dir(&mut self, path: &Path) -> std::io::Result<Vec<TreeNode>> {
+        self.file_filter
+            .filter_entries(path)?
+            .into_iter()
+            .map(|entry| self.build(&entry.path()))
+            .collect()
+    }
+
+    /// Checks if the current path is within the configured maximum depth
+    fn is_within_max_depth(&self, path: &Path) -> bool {
+        if self.cfg.max_depth.is_none() {
+            return true;
+        }
+
+        let max_depth = self.cfg.max_depth.unwrap();
+        let current_depth = path
+            .strip_prefix(&self.root)
+            .map(|p| p.components().count())
+            .unwrap_or(0);
+
+        current_depth < max_depth
     }
 }
