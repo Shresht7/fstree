@@ -24,7 +24,7 @@ impl TextFormatter {
     ///
     /// `prefix`: The indentation string for the current level. (Used in recursive calls)
     /// `is_last`: True if the node is the last child of its parent, influencing branch characters
-    /// `cfg`: The command line arguments that control formatting options
+    /// `cfg`: The configuration that control formatting options
     fn format_node(&self, node: &TreeNode, prefix: &str, is_last: bool, cfg: &Config) -> String {
         let mut output = String::new();
 

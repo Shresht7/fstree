@@ -28,9 +28,9 @@ pub struct TreeNode {
     pub children: Vec<TreeNode>,
 }
 
-/// The builder responsible for constructing a file system tree based on the provided command line arguments
+/// The builder responsible for constructing a file system tree based on the provided configuration
 pub struct TreeBuilder<'a> {
-    /// The command line arguments used to configure the tree building process
+    /// The configuration to use for the tree building process
     pub cfg: &'a Config,
     /// The root path from which the tree is built
     root: std::path::PathBuf,
@@ -43,7 +43,7 @@ pub struct TreeBuilder<'a> {
 }
 
 impl<'a> TreeBuilder<'a> {
-    /// Creates a new `TreeBuilder` with the provided command line arguments.
+    /// Creates a new `TreeBuilder` with the provided configuration.
     pub fn new(cfg: &'a Config) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             root: cfg.root.clone(),
