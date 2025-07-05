@@ -5,6 +5,7 @@
 
 use serde::Deserialize;
 use std::fs;
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
 use crate::cli;
@@ -141,7 +142,7 @@ impl ConfigBuilder {
             size_format: self.size_format.unwrap_or(defaults.size_format),
             max_depth: self.max_depth,
             format: self.format.unwrap_or(defaults.format),
-            no_color: self.no_color,
+            no_color: self.no_color || !std::io::stdout().is_terminal(),
         }
     }
 }
