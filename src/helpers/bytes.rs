@@ -10,18 +10,18 @@ pub enum Format {
 }
 
 impl Format {
-    fn full_name(&self) -> String {
-        (match self {
-            Format::Bytes => "Bytes",
-            Format::KiloBytes => "KiloBytes",
-            Format::MegaBytes => "MegaBytes",
-            Format::GigaBytes => "GigaBytes",
-            Format::TeraBytes => "TeraBytes",
-            Format::PetaBytes => "PetaBytes",
-            Format::ExaBytes => "ExaBytes",
-        })
-        .to_string()
-    }
+    // fn full_name(&self) -> String {
+    //     (match self {
+    //         Format::Bytes => "Bytes",
+    //         Format::KiloBytes => "KiloBytes",
+    //         Format::MegaBytes => "MegaBytes",
+    //         Format::GigaBytes => "GigaBytes",
+    //         Format::TeraBytes => "TeraBytes",
+    //         Format::PetaBytes => "PetaBytes",
+    //         Format::ExaBytes => "ExaBytes",
+    //     })
+    //     .to_string()
+    // }
 
     fn unit(&self) -> String {
         (match self {
