@@ -50,7 +50,10 @@ impl Format {
 }
 
 pub fn format(bytes: u64, mode: &Format) -> String {
-    format!("{:.2}{}", mode.convert(bytes), mode.unit())
+    match mode {
+        Format::Bytes => format!("{}{}", mode.convert(bytes), mode.unit()),
+        _ => format!("{:.2}{}", mode.convert(bytes), mode.unit()),
+    }
 }
 
 impl std::str::FromStr for Format {
