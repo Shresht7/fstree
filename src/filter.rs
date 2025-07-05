@@ -5,6 +5,10 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
 use crate::config::Config;
 
+/// A filter for file system entries.
+///
+/// This filter is responsible for determining which files and directories should be
+/// included in the output, based on the user's configuration.
 pub struct FileFilter {
     root: PathBuf,
     only_directories: bool,
@@ -15,30 +19,33 @@ pub struct FileFilter {
 }
 
 impl FileFilter {
+    /// Creates a new `FileFilter` with the given configuration.
     pub fn new(cfg: &Config) -> Result<Self, Box<dyn std::error::Error>> {
-        // Compile pattern matchers
-        let include_pattern = cfg
-            .include
-            .as_ref()
-            .map(|pat| Glob::new(pat))
-            .transpose()?
-            .map(|g| g.compile_matcher());
-
-        let exclude_pattern = cfg
-            .exclude
-            .as_ref()
-            .map(|pat| Glob::new(pat))
-            .transpose()?
-            .map(|g| g.compile_matcher());
-
         Ok(Self {
             root: cfg.root.clone(),
             only_directories: cfg.directory,
             show_all: cfg.show_all,
-            include_pattern,
-            exclude_pattern,
+            include_pattern: Self::compile_glob(&cfg.include)?,
+            exclude_pattern: Self::compile_glob(&cfg.exclude)?,
             ignorer: Self::setup_gitignore(&cfg.root, &cfg.ignore)?,
         })
+    }
+
+    /// Compiles a glob pattern into a `GlobMatcher`
+    fn compile_glob(pattern: &Option<String>) -> Result<Option<GlobMatcher>, globset::Error> {
+        pattern
+            .as_ref()
+            .map(|pat| Glob::new(pat))
+            .transpose()
+            .map(|g| g.map(|glob| glob.compile_matcher()))
+    }
+
+    /// Filters a directory's entries, returning a vector of included entries.
+    pub fn filter_entries(&self, path: &Path) -> std::io::Result<Vec<std::fs::DirEntry>> {
+        Ok(std::fs::read_dir(path)?
+            .filter_map(Result::ok)
+            .filter(|entry| self.should_include(entry))
+            .collect())
     }
 
     /// Sets up gitignore handling for the given root path
@@ -67,7 +74,8 @@ impl FileFilter {
         Ok(builder.build()?)
     }
 
-    pub fn should_include(&self, entry: &std::fs::DirEntry) -> bool {
+    /// Checks if a given directory entry should be included in the output.
+    fn should_include(&self, entry: &std::fs::DirEntry) -> bool {
         let file_type = match entry.file_type() {
             Ok(ft) => ft,
             Err(_) => return false,
@@ -105,12 +113,5 @@ impl FileFilter {
         }
 
         true
-    }
-
-    pub fn filter_entries(&self, path: &Path) -> std::io::Result<Vec<std::fs::DirEntry>> {
-        Ok(std::fs::read_dir(path)?
-            .filter_map(Result::ok)
-            .filter(|entry| self.should_include(entry))
-            .collect())
     }
 }
