@@ -15,47 +15,51 @@ mod tree;
 
 /// The main entrypoint of the application
 fn main() {
-    // Parse the command-line arguments
+    // Parse command-line arguments
     let args = cli::parse();
 
-    // Load the configuration file
+    // Load settings from the configuration file, if available
     let config_file = config::load_file();
 
-    // Merge configurations from command-line arguments and configuration file
+    // Merge configurations, with command-line arguments taking precedence
     let cfg = setup_configuration(args, config_file);
 
+    // Execute the main application logic
     if let Err(e) = run(&cfg) {
         eprintln!("Error: {e}");
         std::process::exit(1);
     }
 }
 
-/// Sets up the configuration for the application
+/// Sets up the application configuration by merging command-line arguments
+/// with a configuration file.
+///
+/// If the `--no-config` flag is present, only command-line arguments are used.
 fn setup_configuration(args: cli::Args, config_file: config::FileConfig) -> config::Config {
     if args.no_config {
-        // If `no_config` is set, use only the command-line arguments
+        // If `no_config` is set, use only the command-line arguments.
         ConfigBuilder::from(args).build()
     } else {
-        // Otherwise, merge the configurations together
+        // Otherwise, merge the configurations together.
         ConfigBuilder::from(args).merge(config_file.into()).build()
     }
 }
 
-/// Implementation of the main run logic of the command-line
+/// Executes the main logic of the application.
 fn run(cfg: &config::Config) -> Result<(), Box<dyn std::error::Error>> {
-    // Check if the path actually exists
-    if !std::fs::metadata(&cfg.root).is_ok() {
+    // Ensure the root path exists before proceeding
+    if !cfg.root.exists() {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            format!("path does not exist: {}", &cfg.root.display().to_string()),
+            format!("path does not exist: {}", &cfg.root.display()),
         )));
     }
 
-    // Build the tree
+    // Build the directory tree
     let mut builder = tree::TreeBuilder::new(cfg)?;
     let tree = builder.build(&cfg.root)?;
 
-    // Format and print the tree
+    // Format and print the tree to the standard output
     let formatter = formatter::get_formatter(&cfg.format);
     let output = formatter.format(&tree, cfg, builder.get_stats())?;
     println!("{}", output);
