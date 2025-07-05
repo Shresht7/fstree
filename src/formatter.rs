@@ -36,7 +36,7 @@ impl TextFormatter {
         };
 
         // Determine the display name based on the node type
-        let display_name = self.format_display_name(node, !cfg.no_color);
+        let display_name = self.format_display_name(node, cfg, !cfg.no_color);
 
         // Construct the current line with prefix, branch, and name
         let mut line = format!("{}{}{}", prefix, branch, display_name);
@@ -75,10 +75,15 @@ impl TextFormatter {
     }
 
     /// Returns the display name for a `TreeNode` based on its type
-    fn format_display_name(&self, node: &TreeNode, ansi: bool) -> String {
+    fn format_display_name(&self, node: &TreeNode, cfg: &Config, ansi: bool) -> String {
+        let name = if cfg.full_path {
+            node.path.to_string_lossy().to_string()
+        } else {
+            node.name.clone()
+        };
+
         match node.node_type {
             NodeType::File => {
-                let name = node.name.clone();
                 if ansi {
                     name.ansi(&[ANSI::BrightWhite])
                 } else {
@@ -87,9 +92,9 @@ impl TextFormatter {
             }
             NodeType::Directory => {
                 if ansi {
-                    format!(" {} ", node.name).ansi(&[ANSI::Bold, ANSI::BgYellow])
+                    format!(" {} ", name).ansi(&[ANSI::Bold, ANSI::BgYellow])
                 } else {
-                    format!("{}/", node.name)
+                    format!("{}/", name)
                 }
             }
             NodeType::SymbolicLink => {
@@ -97,9 +102,9 @@ impl TextFormatter {
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|_| "<unreadable>".to_string());
                 if ansi {
-                    format!("{} -> {}", node.name, target).ansi(&[ANSI::BrightCyan])
+                    format!("{} -> {}", name, target).ansi(&[ANSI::BrightCyan])
                 } else {
-                    format!("{} -> {}", node.name, target)
+                    format!("{} -> {}", name, target)
                 }
             }
         }
@@ -117,7 +122,7 @@ impl Formatter for TextFormatter {
         let mut output = String::new();
 
         // Handle the root node without any prefix/indentation
-        let mut line = self.format_display_name(node, !cfg.no_color);
+        let mut line = self.format_display_name(node, cfg, !cfg.no_color);
 
         // Add file size to root if requested
         if cfg.size {
