@@ -2,11 +2,27 @@
 
 A command-line utility that displays directory structure in a tree-like format.
 
-
-<div align='center'>
-  <img src="docs/screenshot-new.png" height="300" alt="screenshot default"/>
-  <img src="docs/screenshot-config-new.png" height="300"alt="screenshot with configuration"/>
-</div>
+```
+./
+├── .gitignore
+├── Cargo.lock
+├── Cargo.toml
+├── LICENSE
+├── README.md
+├── src/
+│   ├── cli.rs
+│   ├── config.rs
+│   ├── filter.rs
+│   ├── formatter.rs
+│   ├── helpers/
+│   │   ├── ansi.rs
+│   │   ├── bytes.rs
+│   │   └── mod.rs
+│   ├── main.rs
+│   ├── stats.rs
+│   └── tree.rs
+└── test.txt
+```
 
 ## 🌟 Features
 
@@ -66,10 +82,38 @@ Example `config.json`:
 
 ```json
 {
-  "full-path": true,
-  "max-depth": 3,
-  "no-color": false
+	"prefix": ">> ",
+	"last-prefix": "└─> ",
+	"size": true,
+	"summary": true,
+	"size-format": "kb"
 }
+```
+
+Output:
+
+```
+./
+>> .gitignore (0.01KB)
+>> Cargo.lock (10.94KB)
+>> Cargo.toml (0.43KB)
+>> LICENSE (1.04KB)
+>> README.md (3.77KB)
+>> src/
+│   >> cli.rs (2.45KB)
+│   >> config.rs (9.74KB)
+│   >> filter.rs (3.66KB)
+│   >> formatter.rs (6.30KB)
+│   >> helpers/
+│   │   >> ansi.rs (2.53KB)
+│   │   >> bytes.rs (2.71KB)
+│   │   └─> mod.rs (0.03KB)
+│   >> main.rs (2.17KB)
+│   >> stats.rs (1.04KB)
+│   └─> tree.rs (4.80KB)
+└─> test.txt (0.00KB)
+
+3 directories, 16 files (52856 bytes)
 ```
 
 ---
